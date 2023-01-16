@@ -503,3 +503,120 @@ OrderShipped::dispatchUnless($condition, $order);
 ```
 
 **Event subscriber-lar**
+
+**Event subscriber-larni yozish**
+
+Event subscriber klaslar - bu shu subscriber klas ichida turib bir nechta event-ga subscribe qilish mumkin bo'lgan klaslar. Subscriber klasda event dispatcher obyektini qabul qiluvchi `subsribe` metodini e'lon qilish kerak. Event listener-larni register qilish uchun berilgan dispatcher-da listen metodini chaqirish kerak.
+
+```
+<?php
+ 
+namespace App\Listeners;
+ 
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
+ 
+class UserEventSubscriber
+{
+    /**
+     * Handle user login events.
+     */
+    public function handleUserLogin($event) {}
+ 
+    /**
+     * Handle user logout events.
+     */
+    public function handleUserLogout($event) {}
+ 
+    /**
+     * Register the listeners for the subscriber.
+     *
+     * @param  \Illuminate\Events\Dispatcher  $events
+     * @return void
+     */
+    public function subscribe($events)
+    {
+        $events->listen(
+            Login::class,
+            [UserEventSubscriber::class, 'handleUserLogin']
+        );
+ 
+        $events->listen(
+            Logout::class,
+            [UserEventSubscriber::class, 'handleUserLogout']
+        );
+    }
+}
+```
+
+Agar event listener metodlari subscriber-ni o'zining ichida e'lon qilingan bo'lsa, subscribe metodida ularni soddaroq ko'rnishda array qilib ham qaytarish mumkin:
+
+```
+<?php
+ 
+namespace App\Listeners;
+ 
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
+ 
+class UserEventSubscriber
+{
+    /**
+     * Handle user login events.
+     */
+    public function handleUserLogin($event) {}
+ 
+    /**
+     * Handle user logout events.
+     */
+    public function handleUserLogout($event) {}
+ 
+    /**
+     * Register the listeners for the subscriber.
+     *
+     * @param  \Illuminate\Events\Dispatcher  $events
+     * @return array
+     */
+    public function subscribe($events)
+    {
+        return [
+            Login::class => 'handleUserLogin',
+            Logout::class => 'handleUserLogout',
+        ];
+    }
+}
+```
+
+**Event Subscriber-larni register qilish**
+
+Subscriber-ni yozib bo'lgandan keyin, uni event dispatcher bilan register qilish kerak bo'ladi. Subscriber-lar `EventServiceProvider`-ning `$subscribe` xususiyati yordamida register qilinadi:
+
+```
+<?php
+ 
+namespace App\Providers;
+ 
+use App\Listeners\UserEventSubscriber;
+use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+ 
+class EventServiceProvider extends ServiceProvider
+{
+    /**
+     * The event listener mappings for the application.
+     *
+     * @var array
+     */
+    protected $listen = [
+        //
+    ];
+ 
+    /**
+     * The subscriber classes to register.
+     *
+     * @var array
+     */
+    protected $subscribe = [
+        UserEventSubscriber::class,
+    ];
+}
+```
