@@ -8,6 +8,7 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 use Illuminate\Support\Facades\Event;
 use App\Listeners\WarmUpCache;
 use App\Events\ClearCache;
+use App\Listeners\GroupableEventSubscriber;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -16,13 +17,23 @@ class EventServiceProvider extends ServiceProvider
      *
      * @var array<class-string, array<int, class-string>>
      */
-    protected $listen = [
-        Registered::class => [
-            SendEmailVerificationNotification::class,
-        ],
-        ClearCache::class => [
-            WarmUpCache::class,
-        ]
+    protected $listen = [ // event listener-larni alohida bir biriga biriktirish uchun
+        // Registered::class => [
+        //     SendEmailVerificationNotification::class,
+        // ],
+        // ClearCache::class => [
+        //     WarmUpCache::class,
+        // ]
+    ];
+
+    /**
+     * The subscriber classes to register.
+     *
+     * @var array
+     */
+
+    public $subscribe = [
+        GroupableEventSubscriber::class
     ];
 
     /**
