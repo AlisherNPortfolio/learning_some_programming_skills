@@ -111,6 +111,33 @@ protected $listen = [
 ];
 ```
 
+
+
+Event-larni `$listen` xususiyatida o'z-o'zidan ro'yxatdan o'tkazishdan tashqari, ularni `boot` metodida qo'lda ro'yxatdan o'tkazish ham mumkin:
+
+```php
+use App\Events\PodcastProcessed;
+use App\Listeners\SendPodcastNotification;
+use Illuminate\Support\Facades\Event;
+ 
+/**
+ * Register any other events for your application.
+ *
+ * @return void
+ */
+public function boot()
+{
+    Event::listen(
+        PodcastProcessed::class,
+        [SendPodcastNotification::class, 'handle']
+    );
+ 
+    Event::listen(function (PodcastProcessed $event) {
+        //
+    });
+}
+```
+
 1-qadam.
 
 Avval, EventServiceProvider klasda event va listener-ni biriktirib qo'yamiz (hali event va listener klaslari yaratilmagan bo'lsa ham shunday qilish mumkin. nomi bo'yicha bu klaslarni Laravelning o'zi yaratib oladi):
