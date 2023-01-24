@@ -229,9 +229,44 @@ class EventController extends Controller
         $arr_caches = ['categories', 'products'];
 
         event(new ClearCache($arr_caches)); // <== CacheClear eventini ishga tushirish
+	// ClearCache::dispatch($arr_caches); // shu ko'rinishda ham ishga tushirish mumkin
     }
 }
 
 ```
 
 Yuqoridagilarni umumiy qilib tushuntiradigan bo'lsak, `EventController`-ning index metodi ichida biror amal bajariladi (masalan, login qilish yoki bazadan biror ma'lumotni olish) va bu haqida `ClearCache` eventiga xabar beriladi (event helper funksiyasi orqali `ClearCache` klasi ishga tushirilib, unga kesh kalitlari massivi uzatiladi). Uni kuzatib turgan `WarmUpCache` listeneri esa event orqali olgan kesh kalitlari yordamida keshlarni tozalab chiqadi. `WarmUpCache` listeneri `ClearCache` eventini kuzatishi uchun ular `EventServiceProvider`-ning `$listen` xususiyatida ro'yxatdan o'tkazilib, listener event-ga bog'lab qo'yiladi.
+
+
+##### Qo'shimcha
+
+Eventni ishga tushirish uchun `event()` funksiyasidan tashqari event klasning `dispatch()` metodidan foydalanish ham mumkin:
+
+```php
+<?php
+
+namespace App\Http\Controllers\EventListener;
+
+use App\Events\ClearCache;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+
+class EventController extends Controller
+{
+    public function index()
+    {
+        // ...
+        $arr_caches = ['categories', 'products'];
+
+        ClearCache::dispatch($arr_caches); // <== CacheClear eventini ishga tushirish
+    }
+}
+```
+
+Bundan tashqari, event-ni biror shartga ko'ra ishga tushirishni ham amalga oshirsa bo'ladi:
+
+```php
+ClearCache::dispatchIf($shart, $arr_caches);
+
+ClearCache::dispatchUnless($shart, $arr_caches);
+```
