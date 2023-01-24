@@ -58,6 +58,59 @@ class EventServiceProvider extends ServiceProvider
 
 Endi o'zimiz yangi event va listener qo'shaylik. Faraz qilaylik, qandaydir holat yuz berganda berilgan kalitlar bo'yicha keshlarni tozalab tashlashimiz kerak. Bunda `CacheClear` event-ini ishga tushiramiz. Natijada uni kuzatib turgan `CacheClear` listeneri berilgan kalitli keshlarni tozalab tashlaydi.
 
+Bundan tashqari, bitta event-ga bir nechta listener klasni ham biriktirib qo'yishimiz mumkin. Misol uchun, faraz qilaylik, user ro'yxatdan o'tganda ta'lim platformasida o'quvchi ro'yxatdan o'tgandan keyin, avval o'quvchiga bu haqida xabar yuborish, so'ng o'quvchini sinfga biriktirish, so'ngra partaga biriktirish, kutubxonaga a'zolikka qo'shib qo'yish, kutubxona a'zolik kartasini generatsiya qilib berish kabi ishlarni qilish kerak bo'lsin. Ko'rib turganingizdek, bu amallarning barchasi o'quvchi ro'yxatdan o'tishi bilan o'z-o'zidan amalga oshishi kerak. Shuning uchun yuqoridagi har bir amal uchun alohida listener klas ochiladida, ularni `Registered` eventiga biriktirib qo'yiladi.
+
+`register` metodi:
+
+```php
+/**
+ * Handle a registration request for the application.
+ *
+ * @param  \Illuminate\Http\Request  $request
+ * @return \Illuminate\Http\Response
+ */
+public function register(Request $request)
+{
+    $this->validator($request->all())->validate();
+
+    event(new Registered($user = $this->create($request->all())));
+   // o'quvchini sinfga qo'shish
+   // o'quvchini partaga biriktirish
+   // o'quvchini kutubxonaga a'zo qilish
+   // o'quvchiga kutubxonaga a'zolik kartasini generatsiya qilib berish
+   // ...
+
+    $this->guard()->login($user);
+
+    if ($response = $this->registered($request, $user)) {
+        return $response;
+    }
+
+    return $request->wantsJson()
+                ? new Response('', 201)
+                : redirect($this->redirectPath());
+}
+```
+
+`EventServiceProvider` klasi:
+
+```php
+//Event Service Provider Class/**
+ * The event listener mappings for the application.
+ *
+ * @var array
+ */
+protected $listen = [
+    // Registered eventiga birdaniga bir nechta listener-ni biriktirish
+    Registered::class => [
+        AssignClassToStudent::class,
+        AssignSeatToStudent::class,
+        AssignLabPartnerToStudent::class,
+        AssignLibraryCardToStudent::class,
+    ],
+];
+```
+
 1-qadam.
 
 Avval, EventServiceProvider klasda event va listener-ni biriktirib qo'yamiz (hali event va listener klaslari yaratilmagan bo'lsa ham shunday qilish mumkin. nomi bo'yicha bu klaslarni Laravelning o'zi yaratib oladi):
@@ -236,7 +289,6 @@ class EventController extends Controller
 ```
 
 Yuqoridagilarni umumiy qilib tushuntiradigan bo'lsak, `EventController`-ning index metodi ichida biror amal bajariladi (masalan, login qilish yoki bazadan biror ma'lumotni olish) va bu haqida `ClearCache` eventiga xabar beriladi (event helper funksiyasi orqali `ClearCache` klasi ishga tushirilib, unga kesh kalitlari massivi uzatiladi). Uni kuzatib turgan `WarmUpCache` listeneri esa event orqali olgan kesh kalitlari yordamida keshlarni tozalab chiqadi. `WarmUpCache` listeneri `ClearCache` eventini kuzatishi uchun ular `EventServiceProvider`-ning `$listen` xususiyatida ro'yxatdan o'tkazilib, listener event-ga bog'lab qo'yiladi.
-
 
 ##### Qo'shimcha
 
