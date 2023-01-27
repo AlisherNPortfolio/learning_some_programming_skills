@@ -43,12 +43,9 @@ PUSHER_APP_SECRET=your-pusher-secret
 PUSHER_APP_CLUSTER=mt1
 ```
 
-`config/broadcasting.php` faylidagi `pusher` sozlamasi `cluster` kabi qo'shimcha sozlamalarni ham qo'shish imkonini beradi. 
-
+`config/broadcasting.php` faylidagi `pusher` sozlamasi `cluster` kabi qo'shimcha sozlamalarni ham qo'shish imkonini beradi.
 
 > Barcha kerakli sozlamalarni pusher saytida ro'yxatdan o'tib, yangi app yaratilganda chiqarib berilgan sozlamalardan olish mumkin.
-
-
 
 Endi, `.env` faylidagi broadcast driver-ni `pusher`ga o'zgartiramiz:
 
@@ -74,7 +71,6 @@ ABLY_KEY=your-ably-key
 
 Nihoyat, oxirida frontend tomonida broadcast event-larni qabul qiluvchi Laravel Echo-ni o'rnatamiz va uning sozlamalarini yozib qo'yamiz.
 
-
 ### Muqobil ochiq-kodli dasturlar
 
 ##### PHP
@@ -84,7 +80,6 @@ Laravel-websockets paketi toza PHP-da yozilgan, Pusher bilan ishlay oladigan Web
 ##### Node
 
 Soketi Node asosida yozilgan va Pusher bilan ishlay oladigan WebSocket server hisoblanadi. Bu paket aslida µWebSockets.js ustiga qurilgan bo'lib kengayuvchan va juda tez ishlaydi. Ko'proq ma'lumot olish uchun [rasmiy sayt](https://docs.soketi.app/)iga o'ting.
-
 
 ### Mijoz tomonida o'rnatish
 
@@ -133,8 +128,26 @@ window.Echo = new Echo({
 
 Laravel Echo JavaScript kutubxona bo'lib, kanalga ulanish va serverda driver tomonidan broadcast qilingan eventlarni kuzatib turish imkonini beradi. Echo-ni npm paket menejeri yordamida o'rnatiladi. Pusher Channels broadcaster ishlatilganligi sababli ushbu misolda, `pusher-js` paketni ham o'rnatamiz.
 
-Event-larni broadcast qilish uchun Ably-dan foydalanayotgan bo'lsak ham, nega `pusher-js` JavaScript kutubxonasini o'rnatish kerakligiga hayron bo'layotgan bo'lishingiz mumkin. Ably Pusher-ga mos bo'lgan ko'rinishni ham o'z ichiga olgan. Bu esa unga frontend tomonidagi dasturda event-larni kuzatib turish uchun Pusher protokolidan foydalanishga imkon beradi: 
+Event-larni broadcast qilish uchun Ably-dan foydalanayotgan bo'lsak ham, nega `pusher-js` JavaScript kutubxonasini o'rnatish kerakligiga hayron bo'layotgan bo'lishingiz mumkin. Ably Pusher-ga mos bo'lgan ko'rinishni ham o'z ichiga olgan. Bu esa unga frontend tomonidagi dasturda event-larni kuzatib turish uchun Pusher protokolidan foydalanishga imkon beradi:
 
 `npm install--save-dev laravel-echo pusher-js`
 
 > Pusher bilan ishlashni davom ettirishdan oldin Ably dastur sozlamalarida Pusher protokoli bilan ishlashga ruxsat berib qo'yish kerak bo'ladi. Bunga ruxsat berish Ably dastur sozlamalaridagi "Protocol Adapter Settings" qismida amalga oshiriladi
+
+Echo o'rnatilganidan keyin, frontend qismida JavaScript dasturda (masalan, Vue.js) Echo obyektini yaratish mumkin. Echo obyektini `resources/js/bootstrap.js` faylida yaratish mumkin. Odatiy holatda, bu faylda Echo uchun kerakli barcha sozlamalar qilingan. Faqat, ularni izohdan chiqarish kerak bo'ladi:
+
+```javascript
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
+ 
+window.Pusher = Pusher;
+ 
+window.Echo = new Echo({
+    broadcaster: 'pusher',
+    key: import.meta.env.VITE_ABLY_PUBLIC_KEY,
+    wsHost: 'realtime-pusher.ably.io',
+    wsPort: 443,
+    disableStats: true,
+    encrypted: true,
+});
+```
