@@ -10,7 +10,7 @@ Misol uchun, har safar mahsulot yetkazib berishga chiqarib yuborilganini mijozga
 
 Event va listenerlar `App\Providers\EventServiceProvider` provider-idagi `listen` xususiyati yordamida register qilinadi. Misol uchun `OrderShipped` eventini register qilaylik:
 
-```
+```php
 use App\Events\OrderShipped;
 use App\Listeners\SendShipmentNotification;
  
@@ -30,7 +30,7 @@ Ko'rinib turganidek `OrderShipped` eventini unga berilgan massivdagi listenerlar
 
 **Event & Listener-ni generatsiya qilish**
 
-```
+```apache
 php artisan make:event PodcastProcessed
  
 php artisan make:listener SendPodcastNotification --event=PodcastProcessed
@@ -40,7 +40,7 @@ php artisan make:listener SendPodcastNotification --event=PodcastProcessed
 
 Odatda event-lar `EventServiceProvider`dagi `listen` xususiyatida register qilinadi. Lekin klass yoki closure-ga asoslangan event/listener-larni `EventServiceProvider`ning `boot` metodida ham register qilish mumkin:
 
-```
+```php
 use App\Events\PodcastProcessed;
 use App\Listeners\SendPodcastNotification;
 use Illuminate\Support\Facades\Event;
@@ -67,7 +67,7 @@ public function boot()
 
 Closure-ga asoslangan event listener-larni ularni queue yordamida ishga tushirish paytida `Illuminate\Events\queueable` funksiyasi ichida berib ham register qilish mumkin:
 
-```
+```php
 use App\Events\PodcastProcessed;
 use function Illuminate\Events\queueable;
 use Illuminate\Support\Facades\Event;
@@ -87,7 +87,7 @@ public function boot()
 
 Queue bilan ishlaydigan job-larga o'xshab, queue bilan ishlaydigan listenerlarni ishlashini o'zgartirish uchun `onConnection`, `onQueue` va `delay` metodlaridan foydalanish mumkin:
 
-```
+```php
 Event::listen(queueable(function (PodcastProcessed $event) {
     //
 })->onConnection('redis')->onQueue('podcasts')->delay(now()->addSeconds(10)));
@@ -95,7 +95,7 @@ Event::listen(queueable(function (PodcastProcessed $event) {
 
 Agar anonymus queued listener-lardagi xatoliklar bilan ishlash kerak bo'lsa, `queueable`-ning `catch` metodidan foydalansa bo'ladi. Bu metod event va listenerdagi xatolikka sabab bo'lgan `Throwable` obyektlarini qabul qiladi:
 
-```
+```php
 use App\Events\PodcastProcessed;
 use function Illuminate\Events\queueable;
 use Illuminate\Support\Facades\Event;
@@ -112,7 +112,7 @@ Event::listen(queueable(function (PodcastProcessed $event) {
 
 Bir nechta event-ni bitta listener kuzatib turishini ta'minlash uchun listener-larni `*` wildcard-i bilan register qilish mumkin:
 
-```
+```php
 Event::listen('event.*', function ($eventName, array $data) {
     //
 });
@@ -122,7 +122,7 @@ Event::listen('event.*', function ($eventName, array $data) {
 
 Event klasi aslida event-ga bog'liq bo'lgan ma'lumotlarni saqlab turuvchi konteyner hisoblanadi. Misol uchun, `App\Events\OrderShipped` eventi Eloquent ORM obyektni qabul qiladi:
 
-```
+```php
 <?php
  
 namespace App\Events;
@@ -162,7 +162,7 @@ Ko'rinib turganidek, event klasida hech qanday biror boshqa ish bajarilmayapti. 
 
 Event listenerlar event obyektini `handle` metodida qabul qilib oladi. `event:generate` va `make:listener` artisan buyruqlari kerakli event klasni `handle` metodida type hint qilib beradi. `handle` metodi ichida event sodir bo'lganda qilinishi kerak bo'lgan xohlagan vazifaning kodini yozish mumkin:
 
-```
+```php
 <?php
  
 namespace App\Listeners;
@@ -206,7 +206,7 @@ Queueing listener-lar agar listener email jo'natish yoki HTTP so'rov yaratish ka
 
 Listener-ni queued bilan ishlashi uchun listener klasiga `ShouldQueue` interface-ini qo'shish kerak bo'ladi:
 
-```
+```php
 <?php
  
 namespace App\Listeners;
@@ -226,7 +226,7 @@ Shu yetarl! Endi, biror event-ni shu listener qabul qilib ishga tushishi bilan, 
 
 Queue connection, queue name, or queue delay vaqtlarini o'zgartirish kerak bo'lsa, `$connection`, `$queue`, or `$delay` xususiyatlaridan foydalaniladi:
 
-```
+```php
 <?php
  
 namespace App\Listeners;
@@ -261,7 +261,7 @@ class SendShipmentNotification implements ShouldQueue
 
 Agar listener-ning queue connection yoki queue name-larini runtime vaqtida o'zgartirmoqchi bo'lsak, `viaConnection` va `viaQueue` metodlarini listener klasi ichida e'lon qilishimiz kerak bo'ladi:
 
-```
+```php
 /**
  * Get the name of the listener's queue connection.
  *
@@ -287,7 +287,7 @@ public function viaQueue()
 
 Ba'zan, kelgan ma'lumotga qarab runtime paytida listener queued qilinishi yoki qilinmasligini belgilash kerak bo'ladi. Buning uchun, `shouldQueue` metodini listenerga qo'shish kerak bo'ladi. Agar `shouldQueue` metodi false qaytarsa, listener ishga tushirilmaydi:
 
-```
+```php
 <?php
  
 namespace App\Listeners;
@@ -325,7 +325,7 @@ class RewardGiftCard implements ShouldQueue
 
 Agar listener-dagi queue job-ning delete va release metodlarini qo'lda ishlatish kerak bo'ladigan bo'lsa, `Illuminate\Queue\InteractsWithQueue` trait-i yordamida buni bajarish mumkin:
 
-```
+```php
 <?php
  
 namespace App\Listeners;
@@ -359,7 +359,7 @@ Queued listenerlar database transaction-lar ichida ishga tushirilsa, ular databa
 
 Agar queue connection-ning after_commit sozlamasiga false qiymati berilsa, queued listener-lar barcha ochiq database transaction-lar commit qilinganidan keyin ishlatiladi:
 
-```
+```php
 <?php
  
 namespace App\Listeners;
@@ -381,7 +381,7 @@ Bu haqida to'liq [queued jobs va database transation-lar](https://laravel.com/do
 
 Ba'zan queued event listener-lar muvaffaqiyatsiz bajarilishi mumkin (ya'ni xato bilan). Agar queued listener queue worker-da belgilangan bajarishga urinishlar (attempts) sonidan oshib ketsa, listener `failed` metodini ishga tushiradi:
 
-```
+```php
 <?php
  
 namespace App\Listeners;
@@ -425,7 +425,7 @@ Agar birorta queued listenerda xatolik yuz bersa, uni cheksiz qayta ishga tushir
 
 Listenerning `$tries` xususiyati yordamida listenerda xatolik chiqqanda necha marotaba qayta urinib ko'rish mumkinligini belgilash mumkin:
 
-```
+```php
 <?php
  
 namespace App\Listeners;
@@ -449,7 +449,7 @@ class SendShipmentNotification implements ShouldQueue
 
 Bundan tashqari listenerda xatolik yuz berganda u qancha vaqt davomida qayta ishlashi mumkinligini ham belgilash mumkin. Buning uchun retryUntil metodini listener klasida e'lon qilish kerak bo'ladi:
 
-```
+```php
 /**
  * Determine the time at which the listener should timeout.
  *
@@ -465,7 +465,7 @@ public function retryUntil()
 
 Eventni ishga tushirish uchun dispatch statik metodidan foydalaniladi. Bu metodni ishlatish uchun `Illuminate\Foundation\Events\Dispatchable` trait-idan foydalanish kerak. dispatch metodiga berilgan argumentlar event-ning constructor-iga uzatiladi:
 
-```
+```php
 <?php
  
 namespace App\Http\Controllers;
@@ -496,7 +496,7 @@ class OrderShipmentController extends Controller
 
 Agar event-ni shart asosida ishlatish kerak bo'lsa, `dispatchIf` va `dispatchUnless` metodlari ishlatiladi:
 
-```
+```php
 OrderShipped::dispatchIf($condition, $order);
  
 OrderShipped::dispatchUnless($condition, $order);
@@ -508,7 +508,7 @@ OrderShipped::dispatchUnless($condition, $order);
 
 Event subscriber klaslar - bu shu subscriber klas ichida turib bir nechta event-ga subscribe qilish mumkin bo'lgan klaslar. Subscriber klasda event dispatcher obyektini qabul qiluvchi `subsribe` metodini e'lon qilish kerak. Event listener-larni register qilish uchun berilgan dispatcher-da listen metodini chaqirish kerak.
 
-```
+```php
 <?php
  
 namespace App\Listeners;
@@ -551,7 +551,7 @@ class UserEventSubscriber
 
 Agar event listener metodlari subscriber-ni o'zining ichida e'lon qilingan bo'lsa, subscribe metodida ularni soddaroq ko'rnishda array qilib ham qaytarish mumkin:
 
-```
+```php
 <?php
  
 namespace App\Listeners;
@@ -591,7 +591,7 @@ class UserEventSubscriber
 
 Subscriber-ni yozib bo'lgandan keyin, uni event dispatcher bilan register qilish kerak bo'ladi. Subscriber-lar `EventServiceProvider`-ning `$subscribe` xususiyati yordamida register qilinadi:
 
-```
+```php
 <?php
  
 namespace App\Providers;
