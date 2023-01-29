@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Broadcasting\MessageController;
 use App\Http\Controllers\WebAuth\AuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,3 +24,7 @@ Route::get('register', [AuthController::class, 'register'])->name('register');
 Route::post('register-post', [AuthController::class, 'register'])->name('register-post');
 Route::get('dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
 Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+
+
+Route::get('message/index', [MessageController::class, 'index']);
+Route::post('message/send', [MessageController::class, 'send']);
