@@ -248,3 +248,12 @@ Route::post('/send-message', function (Request $request) {
 </html>
 
 ```
+
+# How it works?
+
+1. `composer install`
+2. Create and update `.env` file with necessary configurations written above.
+3. `php artisan key:generate`
+4. `npm install & npm run dev`
+5. `php artisan serve`
+6. Go to `http://localhost:8080/simple-chat` URL
