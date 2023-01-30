@@ -10,9 +10,7 @@
 
     <title>Test</title>
     <link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}">
-
-    <!-- Styles -->
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    @vite(['resources/css/app.css'])
 </head>
 <body>
     <div class="app">
@@ -71,25 +69,28 @@
         </div>
     </div>
 
+    @vite(['resources/js/app.js'])
     <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ asset('js/echo.js') }}"></script>
+    {{-- <script src="{{ asset('js/echo.js') }}"></script> --}}
     <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
 
     <script>
-        Pusher.logToConsole = true;
+        window.onload = (e) => {
+            Pusher.logToConsole = true;
 
-        window.Echo = new Echo({
-            broadcaster: 'pusher',
-            key: '84cd3fd6046bf794217b',
-            cluster: 'ap2',
-            encrypted: true,
-            logToConsole: true
-        });
+            // window.Echo = new Echo({
+            //     broadcaster: 'pusher',
+            //     key: '84cd3fd6046bf794217b',
+            //     cluster: 'ap2',
+            //     encrypted: true,
+            //     logToConsole: true
+            // });
 
-        Echo.private('user.{{ $user_id }}')
-        .listen('NewMessageNotification', (e) => {
-            alert(e.message.message);
-        })
+            Echo.private('user.{{ $user_id }}')
+            .listen('NewMessageNotification', (e) => {
+                alert(e.message.message);
+            })
+        }
     </script>
 
 </body>
