@@ -1,8 +1,10 @@
 <?php
 
+use App\Events\NewMessageNotification;
 use App\Events\SimpleChatEvent;
 use App\Http\Controllers\Broadcasting\MessageController;
 use App\Http\Controllers\WebAuth\AuthController;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -39,3 +41,8 @@ Route::post('/send-message', function (Request $request) {
     event(new SimpleChatEvent($request->username, $request->message));
     return ['success' => true];
 });
+
+// ************** private chat route ******************
+Route::post('/pusher/auth', [MessageController::class, 'authPusher'])
+    ->middleware('auth');
+Route::post('/send-private', [MessageController::class, 'send']);

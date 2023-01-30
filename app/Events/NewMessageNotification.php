@@ -37,4 +37,9 @@ class NewMessageNotification implements ShouldBroadcastNow
     {
         return new PrivateChannel('user' . $this->message->to); // <== PrivateChannel-da yuboramiz
     }
+
+    // public function broadcastAs()
+    // {
+    //     return 'privateChat';
+    // }
 }
