@@ -185,6 +185,10 @@ return [
         /*
          * Package Service Providers...
          */
+        // App\Services\Geolocation\Geolocation service-ni ishlatib
+        // ko'rish uchun quyidagi qator kodni izohdan chiqaring
+
+        // App\Providers\GeolocationServiceProvider::class, // <==
 
         /*
          * Application Service Providers...
