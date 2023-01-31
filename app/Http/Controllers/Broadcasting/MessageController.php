@@ -21,7 +21,8 @@ class MessageController extends Controller
     {
         $userId = Auth::user()->id;
         $users = User::query()->get();
-        $data = ['user_id' => $userId, 'users' => $users];
+        $messages = Message::query()->get()->toArray();
+        $data = ['user_id' => $userId, 'users' => $users, 'messages' => $messages];
 
         return view('broadcasting.index', $data);
     }
