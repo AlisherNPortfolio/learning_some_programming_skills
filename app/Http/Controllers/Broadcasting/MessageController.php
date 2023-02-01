@@ -6,6 +6,7 @@ use App\Events\NewMessageNotification;
 use App\Http\Controllers\Controller;
 use App\Models\Message;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Pusher\Pusher;
@@ -35,15 +36,19 @@ class MessageController extends Controller
             'whom' => 'required|integer|min:0'
         ]);
 
-        $message = new Message();
-        $message->from = $request->userId;
-        $message->to = $request->whom;
-        $message->message = $request->message;
-        $message->save();
+        try {
+            $message = new Message();
+            $message->from = $request->userId;
+            $message->to = $request->whom;
+            $message->message = $request->message;
+            $message->save();
 
-        event(new NewMessageNotification($message));
+            event(new NewMessageNotification($message));
 
-        return ['success' => true];
+            return ['success' => true];
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
     }
 
     public function authPusher(Request $request)

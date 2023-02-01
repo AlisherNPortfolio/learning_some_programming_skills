@@ -1,10 +1,8 @@
 <?php
 
-use App\Events\NewMessageNotification;
 use App\Events\SimpleChatEvent;
 use App\Http\Controllers\Broadcasting\MessageController;
 use App\Http\Controllers\WebAuth\AuthController;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -30,9 +28,6 @@ Route::get('dashboard', [AuthController::class, 'dashboard'])->name('dashboard')
 Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
 
-Route::get('message/index', [MessageController::class, 'index']);
-Route::post('message/send', [MessageController::class, 'send']);
-
 // *************** simple chat route ****************
 Route::get('simple-chat', function () {
     return view('broadcasting.simple-chat');
@@ -46,3 +41,4 @@ Route::post('/send-message', function (Request $request) {
 Route::post('/pusher/auth', [MessageController::class, 'authPusher'])
     ->middleware('auth');
 Route::post('/send-private', [MessageController::class, 'send']);
+Route::get('message/index', [MessageController::class, 'index']);

@@ -55,8 +55,11 @@ return [
             'secret' => env('PUSHER_APP_SECRET'),
             'app_id' => env('PUSHER_APP_ID'),
             'options' => [
-                'cluster' => env('PUSHER_APP_CLUSTER'),
-                'useTLS' => true,
+                'host' => env('PUSHER_HOST') ?: 'api-' . env('PUSHER_APP_CLUSTER', 'mt1') . '.pusher.com',
+                'port' => env('PUSHER_PORT', 443),
+                'scheme' => env('PUSHER_SCHEME', 'https'),
+                'encrypted' => true,
+                'useTLS' => true
             ],
         ],
         'redis' => [
@@ -192,9 +195,7 @@ Xabar yuborilganini bildiruvchi event-ni yaratamiz: `php artisan make:event NewM
 namespace App\Events;
 
 use App\Models\Message;
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -224,9 +225,22 @@ class NewMessageNotification implements ShouldBroadcastNow
      */
     public function broadcastOn()
     {
-        return new PrivateChannel('user' . $this->message->to); // <== PrivateChannel-da yuboramiz
+        return new PrivateChannel('chat.' . $this->message->to); // <== PrivateChannel-da yuboramiz
+    }
+
+    /**
+     * Agar bu metod e'lon qilinmagan bo'lsa,
+     * Echo.private(...).listen('.my-chat') o'rniga
+     * Echo.private(...).listen('NewMessageNotification') yoziladi
+     *
+     * @return string
+     */
+    public function broadcastAs()
+    {
+        return 'my-chat';
     }
 }
+
 ```
 
 Bu yerdagi eng muhim jihatlardan biri bu - \`ShouldBroadcastNow\` interface-ining ishlatilishi. Bu interface ishlatilganidan keyin Laravel bu event-ni broadcast qilish kerakligini tushunadi.
@@ -259,12 +273,8 @@ use Illuminate\Support\Facades\Broadcast;
 |
 */
 
-Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
-    return (int) $user->id === (int) $id;
-});
-
-Broadcast::channel('user.{toUserId}', function ($user, $toUserId) {
-    return $user->id === $toUserId;
+Broadcast::channel('chat.{toUserId}', function (User $user, $toUserId) {
+    return (int) $user->id == (int) $toUserId;
 });
 ```
 
@@ -273,6 +283,20 @@ O'zimizning private kanalimiz uchun `user.{toUserId}` nomli route yaratdik. Rout
 Foydalanuvchi `user.{USER_ID}` private kanalga subscribe qilishmoqchi bo'lganida, Laravel Echo-ning o'zi orqa fonda XMLHttpRequest yordamida tizimga kirishni amalga oshiradi.
 
 Shu yergacha broadcastingni sozlash va o'rnatishni tugatdik. Endi uni test qilib ko'ramiz.
+
+`routes\web.php` faylidagi route-lar:
+
+```php
+<?php
+
+use App\Http\Controllers\Broadcasting\MessageController;
+use Illuminate\Support\Facades\Route;
+
+Route::post('/pusher/auth', [MessageController::class, 'authPusher'])
+    ->middleware('auth'); // <== bu route orqali kanalga ulanish paytida pusher auth-ni amalga oshiradi
+Route::post('/send-private', [MessageController::class, 'send']);
+Route::get('message/index', [MessageController::class, 'index']);
+```
 
 # Controller yaratish
 
@@ -286,8 +310,11 @@ namespace App\Http\Controllers\Broadcasting;
 use App\Events\NewMessageNotification;
 use App\Http\Controllers\Controller;
 use App\Models\Message;
+use App\Models\User;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Pusher\Pusher;
 
 class MessageController extends Controller
 {
@@ -299,27 +326,60 @@ class MessageController extends Controller
     public function index()
     {
         $userId = Auth::user()->id;
-        $data = ['user_id' => $userId];
+        $users = User::query()->get();
+        $messages = Message::query()->get()->toArray();
+        $data = ['user_id' => $userId, 'users' => $users, 'messages' => $messages];
 
         return view('broadcasting.index', $data);
     }
 
-    public function send()
+    public function send(Request $request)
     {
-        // ...
+        $request->validate([
+            'userId' => 'required|integer|min:0',
+            'message' => 'required|string|min:1|max:255',
+            'whom' => 'required|integer|min:0'
+        ]);
 
-        $message = new Message();
-        $message->from = 1;
-        $message->to = 2;
-        $message->message = "Assalomu aleykum";
-        $message->save();
+        try {
+            $message = new Message();
+            $message->from = $request->userId;
+            $message->to = $request->whom;
+            $message->message = $request->message;
+            $message->save();
 
-        event(new NewMessageNotification($message));
-        //...
+            event(new NewMessageNotification($message));
 
-        return back()->intended('broadcast');
+            return ['success' => true];
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    // Pusher auth qilishi uchun.
+    public function authPusher(Request $request)
+    {
+        $user = auth()->user();
+        $socket_id = $request['socket_id'];
+        $channel_name = $request['channel_name'];
+        $key = getenv('PUSHER_APP_KEY');
+        $secret = getenv('PUSHER_APP_SECRET');
+        $app_id = getenv('PUSHER_APP_ID');
+
+        if ($user) {
+
+            $pusher = new Pusher($key, $secret, $app_id);
+            $auth = $pusher->authorizeChannel($channel_name, $socket_id);
+
+            return response($auth, 200);
+        } else {
+            header('', true, 403);
+            echo "Forbidden";
+            return;
+        }
     }
 }
+
 ```
 
 # View yaratish
@@ -329,6 +389,7 @@ Yuqoridagi controllerning index metodidagi broadcasting.index view-ni yozamiz:
 ```php
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}">
+
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -338,167 +399,263 @@ Yuqoridagi controllerning index metodidagi broadcasting.index view-ni yozamiz:
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>Test</title>
-    <link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}">
-
-    <!-- Styles -->
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css">
+    @vite(['resources/css/chat.css', 'resources/js/init_private_broadcasting.js'])
 </head>
+
 <body>
     <div class="app">
-        <nav class="navbar navbar-default navbar-static-top">
-            <div class="container">
-                <div class="navbar-header">
-                    <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#app-navbar-collapse">
-                        <span class="sr-only">Toggle Navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-
-                    <a class="navbar-brand123" href="{{ url('/') }}">
-                        Test
-                    </a>
-                </div>
-                <div class="collapse navbar-collapse" id="app-navbar-collapse">
-                    <ul class="nav navbar-nav">
-                        &nbsp;
-                    </ul>
-
-                    <ul class="nav navbar-nav navbar-right">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="{{ url('/') }}">Home</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         @if (Auth::guest())
-                        <li>
-                            <a href="{{ route('login') }}">Login</a>
-                        </li>
-                        <li>
-                            <a href="{{ route('register') }}">Register</a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('login') }}">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('register') }}">Register</a>
+                            </li>
                         @else
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-                                {{ Auth::user()->name }} <span class="caret"></span>
-                            </a>
-
-                            <ul class="dropdown-menu" role="menu">
-                                <li>
-                                    <a href="{{ route('logout') }}" onclick="event.preventDefault();document.getElementById('logout-form').submit();">Logout</a>
-                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none">
-                                        @csrf
-                                    </form>
-                                </li>
-                            </ul>
-                        </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                    {{ Auth::user()->name }} <span class="caret"></span>
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                    <li>
+                                        <a href="{{ route('logout') }}"
+                                            onclick="event.preventDefault();document.getElementById('logout-form').submit()"
+                                            class="dropdown-item">Logout</a>
+                                        <form id="logout-form" action="{{ route('logout') }}" method="POST"
+                                            style="display: none">
+                                            @csrf
+                                        </form>
+                                </ul>
+                            </li>
                         @endif
                     </ul>
                 </div>
             </div>
         </nav>
 
-        <div class="content">
+        <div class="container">
             <div class="m-b-md">
-                Yangi notification!
+                <div class="row">
+                    <div class="col-12">
+                        <div class="page-content page-container" id="page-content">
+                            <div class="padding">
+                                <div class="row container d-flex justify-content-center">
+                                    <div class="col-md-6">
+                                        <div class="card card-bordered">
+                                            <div class="card-header">
+                                                <h4 class="card-title"><strong>Chat</strong></h4>
+                                                <a class="btn btn-xs btn-secondary" href="#" data-abc="true">Let's
+                                                    Chat App</a>
+                                            </div>
+
+
+                                            <div class="ps-container ps-theme-default ps-active-y"
+                                                style="overflow-y: scroll !important; height:400px !important;">
+                                                {{-- <div class="media media-meta-day">Today</div> --}}
+                                                <div id="chat-content">
+                                                    @foreach ($messages as $message)
+                                                        <div class="media media-chat {{ $user_id == $message['from'] ? 'media-chat-reverse' : '' }}">
+                                                            @if ($user_id != $message['from'])
+                                                            <img class="avatar"
+                                                            src="https://img.icons8.com/color/36/000000/administrator-male.png"
+                                                            alt="...">
+                                                            @endif
+                                                            <div class="media-body">
+                                                                <p>{{ $message['message'] }}</p>
+                                                                <p class="meta">
+                                                                    <time datetime="{{ date('Y') }}">{{ \Carbon\Carbon::parse($message['created_at'])->format('h:i') }}</time>
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+
+                                                <div class="ps-scrollbar-x-rail" style="left: 0px; bottom: 0px;">
+                                                    <div class="ps-scrollbar-x" tabindex="0"
+                                                        style="left: 0px; width: 0px;"></div>
+                                                </div>
+                                                <div class="ps-scrollbar-y-rail"
+                                                    style="top: 0px; height: 0px; right: 2px;">
+                                                    <div class="ps-scrollbar-y" tabindex="0"
+                                                        style="top: 0px; height: 2px;"></div>
+                                                </div>
+                                            </div>
+
+                                            <div class="publisher bt-1 border-light">
+                                                <img class="avatar avatar-xs"
+                                                    src="https://img.icons8.com/color/36/000000/administrator-male.png"
+                                                    alt="...">
+                                                <input class="publisher-input" type="text"
+                                                    placeholder="Write something">
+                                                <span class="publisher-btn file-group">
+                                                    <i class="fa fa-paperclip file-browser"></i>
+                                                    <input type="file">
+                                                </span>
+                                                <a class="publisher-btn" href="#" data-abc="true"><i
+                                                        class="fa fa-smile"></i></a>
+                                                <a class="publisher-btn text-info" href="#" data-abc="true"><i
+                                                        class="fa fa-paper-plane"></i></a>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="chat-header col-12 mb-3">
+                        <p> You: <span class="badge bg-secondary">{{ auth()->user()->name }}</span> </p>
+                        <select id="usersList" class="form-select">
+                            <option>Select chat</option>
+                            @foreach ($users as $user)
+                                @if ($user->id != $user_id)
+                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                @endif
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="chat-body col-12">
+                        <div id="messages"></div>
+                        <textarea class="form-control mb-3" id="chatInput" cols="30" rows="10"></textarea>
+                        <button type="button" class="btn btn-primary" id="sendBtn">Send</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-
-    <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ asset('js/echo.js') }}"></script>
-    <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"
+        integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous">
+    </script>
 
     <script>
-        Pusher.logToConsole = true;
+        const userID = '{{ $user_id ? $user_id : null }}';//
 
-        window.Echo = new Echo({
-            broadcaster: 'pusher',
-            key: '84cd3fd6046bf794217b',
-            cluster: 'ap2',
-            encrypted: true,
-            logToConsole: true
+        $(document).ready(function() {
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            });
+            let selectedUser = null;
+
+            $(document).on('change', '#usersList', function(e) {
+                selectedUser = +e.target.value;
+            });
+
+            $(document).on('click', '#sendBtn', function(e) {
+
+                e.preventDefault()
+                let message = $('#chatInput').val();
+
+                if (message == '' || selectedUser === null) {
+                    alert('Plz, enter both chat and message')
+                    return false;
+                }
+
+                const data = {
+                        userId: userID,
+                        message: message,
+                        whom: selectedUser
+                    };
+
+                $.ajax({
+                    method: "POST",
+                    url: "/send-private",
+                    data: data,
+                    success: function(response) {
+                        console.log('%c', 'color:red;background:#ccc', response);
+                        $('#chat-content').append(
+                            generateChatItem({
+                                message: data.message,
+                                created_at: new Date()
+                            }, true));
+                    }
+
+                });
+
+            });
+
+            listen(userID);
+
         });
-
-        Echo.private('user.{{ $user_id }}')
-        .listen('NewMessageNotification', (e) => {
-            alert(e.message.message);
-        })
     </script>
 
 </body>
+
 </html>
+
 ```
 
-# Route qo'shish
+# Asosiy JavaScript kodlari
 
-`routes/web.php` da route-larni yozamiz:
+`resources/js/init_private_broadcasting.js` fayli:
 
-```php
-Route::get('message/index', [MessageController::class, 'index']);
-Route::post('message/send', [MessageController::class, 'send']);
+```javascript
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
+
+// Pusher.logToConsole = true;
+
+window.Echo = new Echo({
+    broadcaster: 'pusher',
+    key: import.meta.env.VITE_PUSHER_APP_KEY,
+    cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
+    forceTLS: true,
+    encrypted: true,
+    authEndpoint: '/pusher/auth',
+    csrfToken: $('meta[name="csrf-token"]').attr('content'),
+});
+
+
+window.listen = (id) => { // <== index.blade.php faylida chaqiriladi
+    window.Echo.private('chat.' + id )
+    .listen('.my-chat', (e) => {
+        $('#chat-content').append(window.generateChatItem(e.message))
+
+        console.log('%c' + e.message.message, 'background: blue; color: yellow;font-size:24px;')
+    });
+}
+
+
+window.generateChatItem = (data, isSender = false) => {
+    let messageItem = '<div class="media media-chat '+ (isSender ? 'media-chat-reverse' : '') +'">';
+    if (!isSender) {
+        messageItem += `<img class="avatar" src="https://img.icons8.com/color/36/000000/administrator-male.png" alt="...">`;
+    }
+
+    messageItem += '<div class="media-body">';
+    messageItem += '<p>'+ data.message +'</p>'
+    messageItem += '<p class="meta">';
+    const year = (new Date()).getFullYear();
+    const messageTime = typeof data.created_at == 'string' ? new Date(data.created_at): data.created_at;
+    const hour = messageTime.getHours();
+    const minute = messageTime.getMinutes();
+    messageItem += '<time datetime="'+ year +'">'+ `${+hour >= 10 ? hour : '0'+hour}:${+minute >= 10 ? minute : '0'+minute}` +'</time>';
+    messageItem += '</p></div></div>';
+
+    return messageItem;
+}
+
 ```
 
 # Yuqoridagi barcha kodlarning umumiy ishlash jarayoni
 
-`MessageController`\-ning constructor-ida controller bilan faqat tizimga kirgan foydalanuvchilar ishlay olishi uchun `auth` middleware-idan foydalanganmiz.
-
-index metodi broadcasting.index view-ni render qiladi. Bu view-dagi eng muhim qismi bu Laravel Echo-ning script kodlari:
-
-```html
-<script src="{{ asset('js/echo.js') }}"></script>
-<script src="https://js.pusher.com/7.2/pusher.min.js"></script>
-
-<script>
-  Pusher.logToConsole = true;
-
-  window.Echo = new Echo({
-    broadcaster: "pusher",
-    key: "84cd3fd6046bf794217b",
-    cluster: "ap2",
-    encrypted: true,
-    logToConsole: true,
-  });
-
-  Echo.private("user.{{ $user_id }}").listen("NewMessageNotification", (e) => {
-    alert(e.message.message);
-  });
-</script>
-```
-
-Avval, Pusher websocket serverga websocket bog'lanishni amalga oshirish uchun frontendda muhim bo'lgan kutubxonalar - Laravel Echo va Pusher-ni yuklaymiz.
-
-Keyin, Echo obyektini yaratib olamiz.
-
-Undan keyin, `user.{USER_ID}` private kanalga ulanish uchun Echo-ning `private` metodidan foydalanamiz. Oldin aytganimizdek, foydalanuvchi xabar jo'natishdan oldin tizimga kirgan, ya'ni login qilgan, bo'lishi kerak. Bunday holatda, Echo obyekti kerak authentication-ni kerakli parametrlar bilan XHR orqali orqa fonda o'zi amalga oshiradi. Shundan so'ng, Laravel `routes/channels.php` fayldan `user.{USER_ID}` route-ni qidiradi.
-
-Agar yuqoridagi barcha ishlar ko'ngildagidek ishlasa, bizda Pusher websocket server tomonidan ochilgan websocket bog'lanishga ega bo'lamiz va bu bog'lanish `user.{USER_ID}` kanalda kerakli event-ni kuzatib turadi. Shu bilan asosiy tugadi. Endi, bu kanal orqali barcha keluvchi event-larni qabul qilishimiz mumkin bo'ladi.
-
-Bizning holatimizda biz `NewMessageNotification` event-ini qabul qilib olishimiz kerak. Shuning uchun ham, `Echo`\-ning `listen` metodidan foydalandik. Soddaroq bo'lishi uchun, Pusher server-dan kelgan xabarlarni shunchaki ekranga chiqarib qo'yamiz xolos.
-
-Yuqoridagilar websocket serverdan ma'lumotlarni qabul qilish uchun edi. Endi, event-ni broadcast qilishni ishga tushiradigan controllerdagi `send` metodini ko'raylik.
-
-`send` metodi quyidagi ko'rinishda edi:
-
-```php
-public function send()
-    {
-        // ...
-
-        $message = new Message();
-        $message->from = 1;
-        $message->to = 2;
-        $message->message = "Assalomu aleykum";
-        $message->save();
-
-        event(new NewMessageNotification($message));
-        //...
-
-        return back()->intended('broadcast');
-    }
-```
-
-Bu yerda, tizimga kirgan foydalanuvchilarga ularga yuborilgan xabarlarni jo'natib beramiz. `NewMessageNotification` event-ni ishga tushirish uchun \``event` helper funksiyasidan foydalandik. `NewMessageNotification` event-i `ShouldBroadcastNow` turiga tegishli bo'lgani uchun Laravel `config/broadcasting.php` sozlamalar faylidagi odatiy sozlamalarni yuklab oladi. Oxirida esa, u `NewMessageNotification` event-ini `user.{USER_ID}` kanalida sozlamalarda ko'rsatilgan websocket serveri orqali jo'natadi.
-
-Hozir bizning misolimizda, event Pusher websocket serveri orqali `user.{USER_ID}` kanalida broadcast qilinyapti. Agar qabul qiluvchi foydalanuvchining ID-is 1 bo'lsa, kanal nomi `user.1`  bo'ladi.
 
 # Ishlatib ko'rish
-
-Endi, yuqoridagi ishimizning ishlatib ko'raylik.
-
-Buning uchun avval, `http://site-domain-name/message/index` URL-ini browser-da ochamiz. Agar foydalanuvchi tizimga kirmagan bo'lsa, login sahifasiga redirect bo'ladi. Agar foydalanuvchi tizimga kirgan bo'lsa, `broadcasting.index` view sahifasi ochiladi. Sahifaga kirishimiz bilan, ayrim kerakli ishlarni Laravel-ning o'zi orqa fonda bajarishni boshlaydi. Buni browser-ning console-ini ochib ko'rishimiz mumkin. Frontend qismida Pusher kutubxonasining `Pusher.logToConsole` sozlamasiga ruxsat berish orqali buni amalga oshirganmiz.

@@ -3,9 +3,7 @@
 namespace App\Events;
 
 use App\Models\Message;
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -35,11 +33,18 @@ class NewMessageNotification implements ShouldBroadcastNow
      */
     public function broadcastOn()
     {
-        return new PrivateChannel('user' . $this->message->to); // <== PrivateChannel-da yuboramiz
+        return new PrivateChannel('chat.' . $this->message->to); // <== PrivateChannel-da yuboramiz
     }
 
-    // public function broadcastAs()
-    // {
-    //     return 'privateChat';
-    // }
+    /**
+     * Agar bu metod e'lon qilinmagan bo'lsa,
+     * Echo.private(...).listen('.my-chat') o'rniga
+     * Echo.private(...).listen('NewMessageNotification') yoziladi
+     *
+     * @return string
+     */
+    public function broadcastAs()
+    {
+        return 'my-chat';
+    }
 }

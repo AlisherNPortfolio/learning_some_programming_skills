@@ -72,24 +72,26 @@
                                             </div>
 
 
-                                            <div class="ps-container ps-theme-default ps-active-y" id="chat-content"
+                                            <div class="ps-container ps-theme-default ps-active-y"
                                                 style="overflow-y: scroll !important; height:400px !important;">
                                                 {{-- <div class="media media-meta-day">Today</div> --}}
-                                                @foreach ($messages as $message)
-                                                    <div class="media media-chat {{ $user_id == $message['from'] ? 'media-chat-reverse' : '' }}">
-                                                        @if ($user_id != $message['from'])
-                                                        <img class="avatar"
-                                                        src="https://img.icons8.com/color/36/000000/administrator-male.png"
-                                                        alt="...">
-                                                        @endif
-                                                        <div class="media-body">
-                                                            <p>{{ $message['message'] }}</p>
-                                                            <p class="meta">
-                                                                <time datetime="{{ date('Y') }}">{{ \Carbon\Carbon::parse($message['created_at'])->format('h:i') }}</time>
-                                                            </p>
+                                                <div id="chat-content">
+                                                    @foreach ($messages as $message)
+                                                        <div class="media media-chat {{ $user_id == $message['from'] ? 'media-chat-reverse' : '' }}">
+                                                            @if ($user_id != $message['from'])
+                                                            <img class="avatar"
+                                                            src="https://img.icons8.com/color/36/000000/administrator-male.png"
+                                                            alt="...">
+                                                            @endif
+                                                            <div class="media-body">
+                                                                <p>{{ $message['message'] }}</p>
+                                                                <p class="meta">
+                                                                    <time datetime="{{ date('Y') }}">{{ \Carbon\Carbon::parse($message['created_at'])->format('h:i') }}</time>
+                                                                </p>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                @endforeach
+                                                    @endforeach
+                                                </div>
 
                                                 <div class="ps-scrollbar-x-rail" style="left: 0px; bottom: 0px;">
                                                     <div class="ps-scrollbar-x" tabindex="0"
@@ -154,7 +156,7 @@
     </script>
 
     <script>
-        const userID = '{{ $user_id ? $user_id : null }}';
+        const userID = '{{ $user_id ? $user_id : null }}';//
 
         $(document).ready(function() {
             $.ajaxSetup({
@@ -178,34 +180,33 @@
                     return false;
                 }
 
-                $.ajax({
-                    method: "POST",
-                    url: "/send-private",
-                    data: {
+                const data = {
                         userId: userID,
                         message: message,
                         whom: selectedUser
-                    },
+                    };
+
+                $.ajax({
+                    method: "POST",
+                    url: "/send-private",
+                    data: data,
                     success: function(response) {
-                        console.log(response)
+                        console.log('%c', 'color:red;background:#ccc', response);
+                        $('#chat-content').append(
+                            generateChatItem({
+                                message: data.message,
+                                created_at: new Date()
+                            }, true));
                     }
 
                 });
 
             });
-            initEcho('{{ csrf_token() }}')
 
-            listenChannel(`user.${userID}`)
+            listen(userID);
+
         });
-
-
-
-
-        // window.initEcho('{{ csrf_token() }}')
-
-        // window.initChannel(userID);
     </script>
-    <script defer></script>
 
 </body>
 
