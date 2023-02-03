@@ -17,6 +17,14 @@ class Geolocation
         $this->satellite = $satellite;
     }
 
+    /**
+     * Search places by name
+     *
+     * @method static array search(string $string)
+     * @see Geolocation
+     * @param string $name
+     * @return string
+     */
     public function search(string $name)
     {
         //...
