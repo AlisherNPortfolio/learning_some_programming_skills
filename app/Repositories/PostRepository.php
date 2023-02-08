@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Exceptions\GeneralJsonException;
 use App\Models\Post;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -31,9 +32,7 @@ class PostRepository extends BaseRepository
                 'body' => data_get($attributes, 'body', $post->body)
             ]);
 
-            if (!$updated) {
-                throw new Exception('Failed to update');
-            }
+            throw_if(!$updated, GeneralJsonException::class, 'Failed to update');
 
             if ($userIds = data_get($attributes, 'user_ids')) {
                 $post->users()->sync($userIds);
@@ -48,9 +47,7 @@ class PostRepository extends BaseRepository
         return DB::transaction(function () use ($post) {
             $deleted = $post->forceDelete();
 
-            if (!$deleted) {
-                throw new Exception("Resource can not be deleted");
-            }
+            throw_if(!$deleted, GeneralJsonException::class, 'Resource can not be deleted');
 
             return $deleted;
         });

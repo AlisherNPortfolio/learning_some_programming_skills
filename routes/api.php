@@ -21,3 +21,13 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('logout', 'logout');
     Route::post('refresh', 'refresh');
 });
+
+Route::prefix('v1') // api route-da api-dan keyin v1 qo'shish
+    ->group(function () {
+        // require __DIR__ . '/api/v1/users.php';
+        require __DIR__ . '/api/v1/posts.php';
+        // require __DIR__ . '/api/v1/comments.php';
+
+        // Yuqoridagidey bittalab chaqirib o'tirmaslik uchun ...
+        \App\Helpers\Routes\RouteHelper::includeRouteFiles(__DIR__ . '/api/v1');
+    });

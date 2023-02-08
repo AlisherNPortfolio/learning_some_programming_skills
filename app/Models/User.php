@@ -52,4 +52,9 @@ class User extends Authenticatable implements JWTSubject
     {
         return [];
     }
+
+    public function posts()
+    {
+        return $this->belongsToMany(Post::class, 'user_post_pivot', 'user_id', 'post_id');
+    }
 }
