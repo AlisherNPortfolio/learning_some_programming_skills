@@ -332,3 +332,6 @@ Yuqoridagi exception qaytarish qismini quyidagi kodga almashtirsak ham bo'ladi:
 throw_if(!$updated, GeneralJsonException::class, 'Failed to update');
 //...
 ```
+
+
+![1675857067963](image/README/1675857067963.png)
