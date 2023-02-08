@@ -8,7 +8,9 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvi
 use Illuminate\Support\Facades\Event;
 use App\Listeners\WarmUpCache;
 use App\Events\ClearCache;
+use App\Events\User\UserCreated;
 use App\Listeners\GroupableEventSubscriber;
+use App\Listeners\SendWelcomeEmail;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -24,6 +26,10 @@ class EventServiceProvider extends ServiceProvider
         // ClearCache::class => [
         //     WarmUpCache::class,
         // ]
+
+        UserCreated::class => [
+            SendWelcomeEmail::class
+        ]
     ];
 
     /**
