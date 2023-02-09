@@ -283,3 +283,171 @@ class CommentSeeder extends Seeder
 ```
 
 13. Modellarning o'zaro bog'liqliklarini yozib chiqamiz:
+
+`app/Models/User.php`:
+
+```php
+<?php
+
+namespace App\Models;
+
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
+
+class User extends Authenticatable implements JWTSubject
+{
+    use HasApiTokens, HasFactory, Notifiable;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+    ];
+
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
+    }
+
+    public function posts()
+    {
+        return $this->belongsToMany(Post::class, 'user_post_pivot', 'user_id', 'post_id');
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class, 'user_id');
+    }
+}
+
+```
+
+`app/Models/Post.php`:
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Post extends Model
+{
+    use HasFactory;
+
+    protected $fillable = ['title', 'body'];
+
+    protected $casts = [
+        'body' => 'array'
+    ];
+
+//    protected $appends = [
+//        'title_upper_case'
+//    ];
+
+    public function getTitleUpperCaseAttribute()
+    {
+        return strtoupper($this->title);
+    }
+
+    public function setTitleAttribute($value)
+    {
+        $this->attributes['title'] = strtolower($value);
+    }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'user_post_pivot', 'post_id', 'user_id');
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class, 'post_id');
+    }
+}
+
+```
+
+`app/Models/Comment.php`:
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Comment extends Model
+{
+    use HasFactory;
+
+    protected $fillable = ['body', 'user_id', 'post_id'];
+
+    protected $casts = [
+        'body' => 'array'
+    ];
+
+    public function post()
+    {
+        return $this->belongsTo(Post::class, 'post_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+}
+
+```
+
+`app/Models/Message.php`:
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Message extends Model
+{
+    use HasFactory;
+}
+
+```
