@@ -42,3 +42,13 @@ Route::post('/pusher/auth', [MessageController::class, 'authPusher'])
     ->middleware('auth');
 Route::post('/send-private', [MessageController::class, 'send']);
 Route::get('message/index', [MessageController::class, 'index']);
+
+if (\Illuminate\Support\Facades\App::environment('local')) { // Bu route faqat dev modeda ishlaydi
+    Route::get('/playground', function () {
+        $user = \App\Models\User::query()->find(1);
+        \Illuminate\Support\Facades\Mail::to($user)
+            ->send(new \App\Mail\WelcomeMail($user));
+
+        return null;
+    });
+}

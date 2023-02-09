@@ -3,6 +3,8 @@
 namespace App\Listeners;
 
 use App\Events\User\UserCreated;
+use App\Mail\WelcomeMail;
+use Illuminate\Support\Facades\Mail;
 
 class SendWelcomeEmail
 {
@@ -24,7 +26,7 @@ class SendWelcomeEmail
      */
     public function handle(UserCreated $event)
     {
-        // User pochtasiga xabar yuborish kodi...
-        dump("You ($event->user->email) have created an account in http://learn.loc");
+        Mail::to($event->user)
+            ->send(new WelcomeMail($event->user));
     }
 }
