@@ -451,3 +451,5 @@ class Message extends Model
 }
 
 ```
+
+!Qo'shimcha: post bilan ishlashga bog'liq asosiy kodlar (controller va repository) repository documentation-ida berilgan.
