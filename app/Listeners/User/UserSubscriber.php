@@ -3,7 +3,7 @@
 namespace App\Listeners\User;
 
 use App\Events\User\UserCreated;
-use App\Listeners\SendWelcomeEmail;
+use App\Listeners\User\SendWelcomeEmail;
 use Illuminate\Events\Dispatcher;
 
 class UserSubscriber

@@ -16,7 +16,8 @@ class UserRepository extends BaseRepository
         return DB::transaction(function () use ($attributes) {
             $created = User::query()->create([
                 'name' => data_get($attributes, 'name'),
-                'email' => data_get($attributes, 'email')
+                'email' => data_get($attributes, 'email'),
+                'password' => data_get($attributes, 'password')
             ]);
 
             throw_if(!$created, GeneralJsonException::class, 'Failed to create user');

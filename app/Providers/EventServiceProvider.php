@@ -10,7 +10,7 @@ use App\Listeners\WarmUpCache;
 use App\Events\ClearCache;
 use App\Events\User\UserCreated;
 use App\Listeners\GroupableEventSubscriber;
-use App\Listeners\SendWelcomeEmail;
+use App\Listeners\User\SendWelcomeEmail;
 use App\Listeners\User\UserSubscriber;
 
 class EventServiceProvider extends ServiceProvider
