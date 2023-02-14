@@ -323,7 +323,7 @@ class PostRepository extends BaseRepository
                 $post->users()->sync($userIds);
             }
 
-            return $updated;
+            return $post;
         });
     }
 
