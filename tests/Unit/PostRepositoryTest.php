@@ -10,15 +10,19 @@ class PostRepositoryTest extends TestCase
 {
     public function test_create()
     {
+        // 1. test qiladigan obyektimizni olvolamiz
         $repository = $this->app->make(PostRepository::class);
 
+        // 2. Test qilish uchun test ma'lumot yaratamiz
         $payload = [
             'title' => 'Salom',
             'body' => []
         ];
 
+        // 3. Test qiladigan obyektimizga test ma'lumotni beramiz.
         $result = $repository->create($payload);
 
+        // 4. Olingan natijani test ma'lumotimiz bilan solishtirib ko'ramiz
         $this->assertSame($payload['title'], $result->title, 'Yaratilgan postda bir xildagi title mavjud emas');
     }
 
