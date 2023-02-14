@@ -33,7 +33,7 @@ class PostRepositoryTest extends TestCase
         // env
         $repository = $this->app->make(PostRepository::class);
 
-        $dummyPost = Post::factory(1)->create()[0]; // <== create collection qaytargani uchun
+        $dummyPost = Post::factory(1)->create()[0]; // <== [0] -> create collection qaytargani uchun
 
         // source of truth
         $payload = [
