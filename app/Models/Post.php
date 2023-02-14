@@ -19,15 +19,15 @@ class Post extends Model
     //        'title_upper_case'
     //    ];
 
-    public function getTitleUpperCaseAttribute()
-    {
-        return strtoupper($this->title);
-    }
+    // public function getTitleUpperCaseAttribute()
+    // {
+    //     return strtoupper($this->title);
+    // }
 
-    public function setTitleAttribute($value)
-    {
-        $this->attributes['title'] = strtolower($value);
-    }
+    // public function setTitleAttribute($value)
+    // {
+    //     $this->attributes['title'] = strtolower($value);
+    // }
 
     public function users()
     {

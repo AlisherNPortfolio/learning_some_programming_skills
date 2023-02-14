@@ -11,6 +11,7 @@ use App\Events\ClearCache;
 use App\Events\User\UserCreated;
 use App\Listeners\GroupableEventSubscriber;
 use App\Listeners\SendWelcomeEmail;
+use App\Listeners\User\UserSubscriber;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -39,7 +40,8 @@ class EventServiceProvider extends ServiceProvider
      */
 
     public $subscribe = [
-        GroupableEventSubscriber::class
+        GroupableEventSubscriber::class,
+        UserSubscriber::class
     ];
 
     /**

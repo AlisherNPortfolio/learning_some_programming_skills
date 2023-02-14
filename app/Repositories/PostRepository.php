@@ -2,9 +2,10 @@
 
 namespace App\Repositories;
 
+use App\Events\Post\PostCreated;
+use App\Events\Post\PostDeleted;
 use App\Exceptions\GeneralJsonException;
 use App\Models\Post;
-use Exception;
 use Illuminate\Support\Facades\DB;
 
 class PostRepository extends BaseRepository
@@ -18,7 +19,13 @@ class PostRepository extends BaseRepository
                 'body' => data_get($attributes, 'body')
             ]);
 
-            $created->users()->sync(data_get($attributes, 'user_ids')); // <== Post bog'langan user-larni user_post_pivot jadvalda saqlaydi
+            throw_if(!$created, GeneralJsonException::class, 'Failed to create');
+
+            event(new PostCreated($created));
+
+            if ($userIds = data_get($attributes, 'user_ids')) {
+                $created->users()->sync($userIds); // <== Post bog'langan user-larni user_post_pivot jadvalda saqlaydi
+            }
 
             return $created;
         });
@@ -48,6 +55,8 @@ class PostRepository extends BaseRepository
             $deleted = $post->forceDelete();
 
             throw_if(!$deleted, GeneralJsonException::class, 'Resource can not be deleted');
+
+            event(new PostDeleted($post));
 
             return $deleted;
         });
