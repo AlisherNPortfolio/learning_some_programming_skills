@@ -64,6 +64,8 @@ Ushbu darsda, Laravel-da unit testing va feature testing yozishni ko'ramiz.
 
 # Amaliyot
 
+## Unit testing
+
 Laravel-da barcha testlash uchun mo'ljallangan fayllar `tests` papkasida joylashadi.
 
 Laravel phpunit paketidan foydalanib test-lashni bajaradi. Testlashning asosiy sozlamalari `root` papkasidagi `phpunit.xml` faylida berilgan.
