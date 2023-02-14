@@ -1,4 +1,4 @@
-# Laravelda testlash
+# conLaravelda testlash
 
 Dasturni yaratish, uni keyinchalik support qilish jarayoni ancha murakkab jarayon hisoblanadi. Shuning uchun ham, bu jarayonda dasturdagi kamchiliklarni oldini olish va bartaraf etishda testlash muhim.
 
@@ -9,7 +9,7 @@ Quyidagicha testlash usullari mavjud:
 * Feature testing
 * End to End (E2E)
 
-Ro'yxatdagi testlashning eng keng tarqalgan usuli - bu manual testing, ya'ni qo'lda testlash. Bunda dasturchining o'zi kod bo'ylab bitta bitta yurib, tekshirib chiqadi. 
+Ro'yxatdagi testlashning eng keng tarqalgan usuli - bu manual testing, ya'ni qo'lda testlash. Bunda dasturchining o'zi kod bo'ylab bitta bitta yurib, tekshirib chiqadi.
 
 Qolgan uchta testlash esa auto-testing hisoblanib, ularda dasturchi qatnashmaydi.
 
@@ -99,3 +99,138 @@ class PostRepositoryTest extends TestCase
 }
 
 ```
+
+`app/Repositories/PostRepository.php` ni test qilishdan boshlaymiz. Test qilishda eng muhim narsa - bu nimani test qilayotganimiz. Bizning `PostRepository` klasimizda uchta metod bor - `create`, `update` va `forceDelete`. Endi, shu uchta metodning har biri uchun test yozamiz. Kelishuv bo'yicha har bir test qilish metodi nomi `snake_case` bilan yozilishi va `test` bilan boshlanishi kerak:
+
+```php
+<?php
+
+namespace Tests\Unit;
+
+use PHPUnit\Framework\TestCase;
+
+class PostRepositoryTest extends TestCase
+{
+    public function test_create()
+    {
+    }
+
+    public function test_update()
+    {
+    }
+
+    public function test_delete()
+    {
+    }
+}
+```
+
+`PostRepository` klasni test qilish uchun boshlang'ich holatdagi klasni yozdik (yuqoridagi kod). Xo'sh, end qanday qilib testlashni boshlaymiz?
+
+1. Bunig uchun avval maqsadimizni aniqlab olamiz, ya'ni bu funsionallikning maqsadi nima, nimani test qilmoqchiligimizni aniqlashtiramiz. Hozirgi holatimizda, bizda post `create` metod yordamida yaratiladi.
+   Maqsad: `create()` metodi databaseda record yozishini tekshirish.
+2. Keyin environment replicate qilinadi. Misol uchun, agar shopping cart-ni test qiladigan bo'lsak, shopping cart muhitini yaratishimiz kerak bo'ladi. Ya'ni, buning uchun, user tizimga kiradi (login qilib), so'ng mahsulotlarni tanlab, savatchaga o'tkazadi. Mana shu holat environment (muhitni) replicate qilish bo'ladi.
+   Environmentga talab: `PostRepository` obyektiga murojaat qila olish. Bunda biz service container-dan `PostRepository`ning obyektini olamiz.
+3. Yakunda qanaqa natija olish kerakligini aniqlashtirib qo'yish. misol uchun biror post create qilishda, unga biror title va body ni berib yuborsak, metod bizga xuddi shunday title va bodyni qaytarishi kerak.
+4. Testdan chiqqan natijani va (3-qadamda) biz kutgan natijani solishtiramiz. Shunga qarab testdan o'tgan o'tmaganlikni aniqlab olamiz.
+
+Endi, amaliyotga o'tamiz. Testni boshlashdan avval, test clasimizni `PHPUnit\Framework\TestCase` classidan emas, balki laravelning `Tests\TestCase` clasidan meros qilib olamiz. Chunki, bu klas PHPUnit clasidan ko'ra yengil ishlaydi.
+
+1. Endi, yuqoridagi 2-qadam bo'yicha, `PostRepository`dan obyekt olamiz:
+
+```php
+//...
+$repository = $this->app->make(PostRepository::class);
+//...
+```
+
+2. 3-qadam bo'yicha yuboriladigan ma'lumotni e'lon qilamiz:
+
+```php
+//...
+$payload = [
+            'title' => 'Salom',
+            'body' => []
+        ];
+//...
+```
+
+3. Keyin, post yaratib, natijani solishtiramiz. Olingan natija yaratilgan post modelining ma'lumotlari bilan bir xil bo'lishi kerak. Buning uchun `TestCase` klasning `assertSame()` metodidan foydalanish kerak:
+
+```php
+//...
+$result = $repository->create($payload);
+
+$this->assertSame($payload['title'], $result->title, 'Yaratilgan postda bir xildagi title mavjud emas');
+//...
+```
+
+4. Testni ishlatib ko'ramiz. Buning uchun `vendor\bin\phpunit` buyrug'ini ishga tushiramiz:
+
+![1676271043215](image/README/1676271043215.png)
+
+Test muvaffaqiyatli o'tdi. Faqat ikkita bo'sh test metodlarimiz (test_update va test_delete) borligi uchun `...2 risky tests` xabarini chiqaryapti. Lekin bunga berish shart emas.
+
+Agar test muvaffaqiyatsiz tugasa quyidagi ko'rinishda chiqishi mumkin edi:
+
+![1676271281348](image/README/1676271281348.png)
+
+Endi, qolgan ikkita metod uchun testlarni yozib chiqamiz.
+
+5. `test_update` metodi:
+
+```php
+//...
+    public function test_update()
+    {
+        // Maqsad: update metodi yordamida maqolani yangilash
+
+        // env
+        $repository = $this->app->make(PostRepository::class);
+
+        $dummyPost = Post::factory(1)->create()[0]; // <== create collection qaytargani uchun
+
+        // source of truth
+        $payload = [
+            'title' => 'abc123'
+        ];
+
+        // natijani solishtirish
+        $updated = $repository->update($dummyPost, $payload);
+        $this->assertSame($payload['title'], $updated->title, "Yangilangan postda bir xildagi title mavjud emas");
+    }
+//...
+```
+
+![1676272248363](image/README/1676272248363.png)
+
+Bu testimiz ham muvaffaqiyatli o'tdi!!!
+
+6. `test_delete` metod
+
+```php
+//...
+    public function test_delete()
+    {
+        // Maqsad: forceDelete metodi ishlashini tekshirish
+
+        // env
+        $repository = $this->app->make(PostRepository::class);
+        $dummy = Post::factory(1)->create()->first();
+
+        // natijani solishtirish
+        $deleted = $repository->forceDelete($dummy);
+
+        // o'chirilganini tasdiqlash
+        $found = Post::query()->find($dummy->id);
+
+        $this->assertSame(null, $found, 'Post o\'chirilmagan');
+    }
+//...
+```
+
+![1676273267934](image/README/1676273267934.png)
+
+Va nihoyat barcha testlar muvaffaqiyatli bajarildi.
+
+`UserRepository` va `CommentRepository` lar uchun ham test xuddi shunday ko'rinishda yozib, bajariladi.
