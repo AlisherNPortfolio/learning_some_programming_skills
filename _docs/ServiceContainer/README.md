@@ -17,20 +17,20 @@ new Geolocation($map, $satellite);
 //...
 ```
 
-Bu muammoni Service Container hal qiladi. 
+Bu muammoni Service Container hal qiladi.
 
-> Service Provider boshqa class-lardan obyekt olib beruvchi class hisoblanadi.
+> Service Container boshqa class-lardan obyekt olib beruvchi class hisoblanadi.
 
-Service Provider Map va Satellite class-laridan avtomatik holda obyekt olib, ularni Geolocation class-iga inject qilib beradi.
+Service Container Map va Satellite class-laridan avtomatik holda obyekt olib, ularni Geolocation class-iga inject qilib beradi.
 
 > Dasturlashda bitta obyektga boshqa bir yoki bir nechta obyektning kiritilishi `Dependency Injection` deyiladi. Bunda kiritilishi zarur bo'lgan obyektlarning class-lari injection-ni talab qilgan obyekt-ning class-i constructor-iga parametr ko'rinishida beriladi.
 
-Shunday qilib, Geolocation class-i Map va Satellite class-lariga bog'liq.
+Shunday qilib, Geolocation class-i Map va Satellite class-lariga bog'liq holda ishlaydi.
 
 # Yechim
 
 1. `App` papkasida `Services` papkasini, uning ichida esa `Geolocation`, `Map` va `Satellite` papkalarini ochamiz.
-2. Har bir ochilgan papkada mos ravishda `Geolocation.php`, `Map.php` va `Satellite.php` fayllari, ularning ichida esa `Geolocation`, `Map`, `Satellite` class-larini yaratamiz:
+2. Har bir ochilgan papkada mos ravishda `Geolocation.php`, `Map.php` va `Satellite.php` fayllarini, ularning ichida esa `Geolocation`, `Map`, `Satellite` class-larini yaratamiz:
 
 `Geolocation.php`:
 
@@ -166,7 +166,7 @@ Endi `GeolocationServiceProvider` class-ni project-ga yuklanishi uchun `app/conf
 //...
 ```
 
-Endi, yuqorida bajarganlarimizni ishlatib ko'ramiz:
+Keyin, yuqorida bajarganlarimizni ishlatib ko'ramiz:
 
 ```php
 <?php
@@ -193,7 +193,6 @@ public function register()
 
 app()->make(\App\Services\Geolocation\Geolocation::class); // "Salom"
 ```
-
 
 Bundan tashqari, agar yuqoridagi kodimizda Map va Satellite service-larini Geolocation service-iga bind qilmasak ham, bu ikkala service Laravel tomonidan Geolocation-ga avtomatik inject qilinadi (Automatic Dependency Resolution). Lekin bu xususiyat constructor-da faqat class-lar argument qilib berilgandagina ishlaydi. Agar constructor-da string, number yoki boshqa biror turdagi ma'lumot turi ishlatilganda, avtomatik inject qilish ishlamaydi.
 
