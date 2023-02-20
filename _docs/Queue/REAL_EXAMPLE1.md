@@ -352,4 +352,4 @@ Ko'rib turganingizdek, queue-dagi birinchi job `default`, ikkinchisi esa `high-p
 
 # Sozlamalar bilan ishlash
 
-Uchinchi o'rindagi eng ko'p ishlatiladigan sozlama - bu `after_commit` sozlamasi. Agar jobni database transaction ichida ishlatadigan bo'lsak,
+Uchinchi o'rindagi eng ko'p ishlatiladigan sozlama - bu `after_commit` sozlamasi. Agar jobni database transaction ichida ishlatadigan bo'lsak, freymvork hali bazaga o'zgarishlarni commit qilmasdan turib, joblar ishlab ketishi mumkin. Bunday holatlarda, ayniqsa job databasedagi qiymatga bog'liq bo'lsa, proyektning noto'g'ri ishlashiga olib kelishi. `after_commit` sozlamasiga `true` berish orqali mana shu muammo hal qilinadi, ya'ni bunda freymvork jobni aynan o'zgarishlarni databasega commit qilgandan keyin ishlashini ta'minlab beradi. Bu sozlamani barcha joblar uchun yoki faqat tanlangan job uchun o'rnatish ham mumkin.
