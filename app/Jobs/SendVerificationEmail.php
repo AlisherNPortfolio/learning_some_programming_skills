@@ -13,6 +13,8 @@ class SendVerificationEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $timeout = 1;
+
     /**
      * Create a new job instance.
      *

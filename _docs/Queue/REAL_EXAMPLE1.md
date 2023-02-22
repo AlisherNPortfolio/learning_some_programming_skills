@@ -350,6 +350,99 @@ Ko'rib turganingizdek, queue-dagi birinchi job `default`, ikkinchisi esa `high-p
 
 `php artisan queue:work` buyrug'i bilan workerni ishga tushiramiz.
 
+`php artisan queue:work --queue="high-priority,default"`
+
 # Sozlamalar bilan ishlash
 
 Uchinchi o'rindagi eng ko'p ishlatiladigan sozlama - bu `after_commit` sozlamasi. Agar jobni database transaction ichida ishlatadigan bo'lsak, freymvork hali bazaga o'zgarishlarni commit qilmasdan turib, joblar ishlab ketishi mumkin. Bunday holatlarda, ayniqsa job databasedagi qiymatga bog'liq bo'lsa, proyektning noto'g'ri ishlashiga olib kelishi. `after_commit` sozlamasiga `true` berish orqali mana shu muammo hal qilinadi, ya'ni bunda freymvork jobni aynan o'zgarishlarni databasega commit qilgandan keyin ishlashini ta'minlab beradi. Bu sozlamani barcha joblar uchun yoki faqat tanlangan job uchun o'rnatish ham mumkin.
+
+`retry_after` sozlamasi Amazon SQS driveridan boshqa barchasida ishlatiladi. Amazon SQS SQS Visibility Settingsni ishlatadi. Bu sozlamaga 90 soniyani qiymat qilib berib, siz freymvorkka job shu vaqt ichida bajarilmasa yoki xatolik kelib chiqsa, o'sha jobni to'xtatishni va uni qayta ishga tushirishni aytasiz.
+
+Bundan tashqari workerlarning ham o'zining timeouti bor. Buning uchun workerni `php artisan queue:work --timeout=60` deb ishga tushirish kerak. Bu buyruq agar job 60 soniya ichida bajarilmasa yoki xatolik kelib chiqsa, worker xatolik chiqarib beradida, ishini to'xtatadi.
+
+Ko'pchilik  `retry_after` va `timeout` sozlamalarini chalkashtirib yuboradi. Lekin, ularni bir necha marta ishlatgandan keyin oson tushunib olsa bo'ladi. Endi, `redis` bog'lanishning ikkita sozlamasi haqida gaplashamiz.
+
+Birinchi sozlama - bu `block_for`. Bu sozlamaga 5 qiymatini berib qo'ysak, worker avval Redis-ga bog'lanib, keyin bajarilmagan job-larni tekshiradi. Agar birorta ham bajarilmagan job-ni topmasa, yana qaytadan tekshirishni boshlashdan avval 5 soniya kutadi. Bu sozlama, agar undan to'g'ri foydalanilsa, CPU resurslarini tejab beradi.
+
+Ikkinchi sozlama `connection` sozlamasi. Bu yerda qiymat sifatida `default`ning turishi dasturchilarni chalkashtiradi. Bunday paytda bir nechta queue bog'lanish qilsa ham bo'ladimi kabi savollar paydo bo'lishiga olib keladi. Bu sozlamani tushunish uchun avval `config/database.php` fayliga qaraylik:
+
+```php
+//...
+'redis' => [
+
+        'client' => env('REDIS_CLIENT', 'phpredis'),
+
+        'options' => [
+            'cluster' => env('REDIS_CLUSTER', 'redis'),
+            'prefix' => env('REDIS_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_database_'),
+        ],
+
+        'default' => [ // <==
+            'url' => env('REDIS_URL'),
+            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'username' => env('REDIS_USERNAME'),
+            'password' => env('REDIS_PASSWORD'),
+            'port' => env('REDIS_PORT', '6379'),
+            'database' => env('REDIS_DB', '0'),
+        ],
+
+        'cache' => [
+            'url' => env('REDIS_URL'),
+            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'username' => env('REDIS_USERNAME'),
+            'password' => env('REDIS_PASSWORD'),
+            'port' => env('REDIS_PORT', '6379'),
+            'database' => env('REDIS_CACHE_DB', '1'),
+        ],
+
+    ],
+//...
+```
+
+Ko'rib turganingizdek, ikkita redis bog'lanishining sozlamalari berilgan. Bittasi, `default` bo'lsa, boshqasi `cache` bog'lanish. Boshlang'ich holatda, freymwork queue uchun `default` sozlamani ishlatadi. Ammo, keyinchalik zaruratga qarab boshqasini tanlash ham mumkin. Shuning uchun ham `config/queue.php` dagi `redis`ning `connection` sozlamasi redis uchun database bog'lanish berib qo'yiladi.
+
+# Job-larning ishlashida xatolik yuzaga kelishi va joblarni qayta ishga tushirish
+
+Shu paytgacha, xatosiz ishlagan joblarni ko'rib chiqdik. Endi esa, joblarni bajarish paytida chiqadigan xatolar bilan ishlashni ko'ramiz. Jobni bajarishda xatolik chiqadigan bo'lsa, yoki jobni qaytadan ishga tushirishimiz yoki bunga e'tibor bermasdan o'tkazib yuborishimiz mumkin. Joblarni bajarishda xato yuz berishiga yoki timeout yoki exceptionlar sabab bo'lishi mumkin. Shularga qarab ko'raylik.
+
+Xatoli holatlarni ko'rish uchun, `app/Jobs/SendVerificationEmail.php` fayliga qaytib, uni quyidagicha o'zgartiraylik:
+
+```php
+<?php
+
+namespace App\Jobs;
+
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+
+class SendVerificationEmail implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public $timeout = 1;
+
+    // ...
+
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
+    public function handle()
+    {
+        sleep(5);
+        logger('email sent!');
+    }
+}
+```
+
+`$timeout` public xususiyati queue worker qancha vaqt davomida ishlashi kerakligini ko'rsatib beradi. Tepadagi koddagi `$timeout`ning 1 qiymati bajarilayotgan job 1 soniyadan ko'p ishlamasligini bildiradi. `handle()` metodi ichidagi `sleep()` metodiga tegmadik. Shuning uchun, nazariy jihatdan, 1 soniyadan so'ng job bajarilishi to'xtatiladi va jobni bajarishda xatolik yuz bergani haqida xabar beradi. Endi, ishlatib ko'rish uchun, queue workerni qayta ishga tushirib, `/queue` URLga o'tamiz. Workerdan chiqadigan natija esa quyidagicha bo'ladi:
+
+```apache
+[2021-09-13 06:42:22][2] Processing: App\Jobs\SendVerificationEmail
+[2021-09-13 06:42:22][2] Failed:     App\Jobs\SendVerificationEmail
+fish: Job 1, 'php artisan queue:work' terminated by signal SIGKILL (Forced quit)
+```
