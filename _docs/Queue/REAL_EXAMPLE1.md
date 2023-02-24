@@ -28,14 +28,13 @@ Lekin, deyarli barcha holatlarda web dasturlarda email yuborganingizda yoki katt
   * Laravel Horizon-ni production-da ishlatish
   * Yakun
 
-
 # Job-lar, Queue-lar va Worker-lar
 
 Kod yozishdan oldin jarayonlarni asinxron ishlashini misollar ko'rish orqali tushunib olaylik. Faraz qiling, siz online oziq-ovqat sotish do'koni egasisiz. Sizning do'koningiz telefon orqali buyurtmalar qabul qilib, ularni egalariga yetkazib berish bilan shug'ullanadi.
 
 Endi, tasavvur qiling, mijoz qo'ng'irog'iga javob berib, buyurtma qabul qildingiz. Keyin, omborga kirib, buyurtmada ko'rsatilgan mahsulotlarni olasiz, ularni qutiga joylaysiz va oxirida uni yetkazib beruvchiga topshirasiz. Mana shu holatda, ya'ni olgan buyurtmangizni qutiga solib, yetkazib beruvchiga jo'natayotgan vaqtingizda (tahminan yarim yoki bir soat ichida deylik) boshqa yangi buyurtmani qabul qila olmaysiz. Chunki bu vaqtda siz band bo'lasiz. Bunday ishlashni sinxron ishlash deyiladi. Ya'ni, siz ish bajarish paytingizda, yangi kirish yoki chiqish amallarini bloklab qo'yasiz (buyurtma qabul ham qila olmaysiz, yoki biror narsani jo'nata olmaysiz ham, chunki siz omborda mahsulotlarni yig'ib, qutiga joylayotgan bo'lasiz).
 
-Bunaqa sinxron ishlash o'rniga, siz omborga bitta ishchi (**worker**) yollaysiz. O'zingiz telefon oldida turib, yangi buyurtmalarni qabul qilib olaverasiz, qabul qilingan buyurtmalarni qog'ozga yozib qo'yib (bu yozuvlarni **job** deb nomlaylik), ularni navbatga (**queue**-ga) qo'yib qo'yaveramiz. 
+Bunaqa sinxron ishlash o'rniga, siz omborga bitta ishchi (**worker**) yollaysiz. O'zingiz telefon oldida turib, yangi buyurtmalarni qabul qilib olaverasiz, qabul qilingan buyurtmalarni qog'ozga yozib qo'yib (bu yozuvlarni **job** deb nomlaylik), ularni navbatga (**queue**-ga) qo'yib qo'yaveramiz.
 
 Bunda siz yollagan ishchi (worker) qog'ozga yozib qo'ygan bajarilishi kerak bo'lgan buyurtmalarni (job-larni) navbat bilan (queue-dan olib) bajarib boradi. Mana shu holatda, sizda yangi buyurtmalarni qabul qilishda va ularni egalariga jo'natishda hech qanday uzilish bo'lib qolmaydi. Bunday ishlashni asinxron ishlash desak bo'ladi.
 
@@ -284,7 +283,6 @@ Route::get('/', function () {
 
 `withChain()` metodi bitta job bajarilganidan keyin boshqa qo'shimcha joblar ketma-ketligini bajarish uchun ishlatiladi.
 
-
 # Queue-lar va queue-ga bog'lanish
 
 Oldinroq aytib o'tilganidek, Laravel-da oldindan sozlangan bog'lanishlar mavjud. Shu paytgacha esa `database` bog'lanishlarni ishlatib ham ko'rdik. Endi, barcha bog'lanish turlarini batafsilroq ko'rib chiqamiz.
@@ -446,3 +444,5 @@ class SendVerificationEmail implements ShouldQueue
 [2021-09-13 06:42:22][2] Failed:     App\Jobs\SendVerificationEmail
 fish: Job 1, 'php artisan queue:work' terminated by signal SIGKILL (Forced quit)
 ```
+
+Davomi: pdf faylda
