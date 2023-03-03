@@ -102,14 +102,10 @@ public function contact(Request $request)
                 $channel_id = env('TELEGRAM_CHANNEL_ID');
 
                 if ($bot_id && $channel_id) {
-                    $text = "<h1><b>" . __('messages.subject') . "</b>: {$data['subject']}</h1>
-                    <p><b>" . __('messages.sender') . "</b>: {$data['name']}</p>
-                    <p>
-                        <b>" . __('messages.sender_email') . "</b>: <a href=\"mailto:{$data['email']}\">{$data['email']}</a>
-                    </p>
-                    <div>
-                        <p>{$data['subject']}</p>
-                    </div>";
+                    $text = "<b>" . __('messages.subject') . "</b>: {$data['subject']}" . PHP_EOL .
+                        "<b>" . __('messages.sender') . "</b>: {$data['name']}" . PHP_EOL .
+                        "<b>" . __('messages.sender_email') . "</b>: <a href=\"mailto:{$data['email']}\">{$data['email']}</a>" .
+                        PHP_EOL . "<b>" . __('messages.message') . "</b>: {$data['message']}";
 
                     $telegram = new Telegram($bot_id, $channel_id);
                     $telegram->sendMessage(['text' => $text, 'parse_mode' => Telegram::PARSE_MODE_HTML], true);
