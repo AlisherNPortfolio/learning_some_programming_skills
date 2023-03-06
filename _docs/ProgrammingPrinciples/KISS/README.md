@@ -318,3 +318,7 @@ O'rganganlarimizni xulosa qilamiz:
 
 
 Va nihoyat, nafaqat dasturlash, kod yozishda, balki har qanday sohada qilinayotgan ishni yoki loyihalanayotgan mahsulotni murakkablashtirib yubormaslik juda muhim. Chunki, bu ish yoki loyiha bilan faqat siz ishlamaysiz. U bilan sizning hamkasblaringiz yoki mijozlar ham ishlaydi. Ular sizning ishingiz yoki loyihangizni ko'rganda, bir qarashda tushunishlari kerak.
+
+Misol uchun, agar siz ko'chmas mulkni ijaraga beruvchi platforma qilayotgan bo'lsangiz, avvalo uning dizaynini sodda qilishga harakat qilish kerak. Mijozlar platformangizga kirganda, uning murakkabligidan boshi aylanib qolmasin. Platformaga kirishi bilan nima qilish kerakligini darrov tushunsin. 
+
+Bundan tashqari platformaning kodini yozishda ham xuddi shunday bo'lishi kerak. Siz yozgan kodni boshqa dasturchilar ham darrov tushunishi kerak.
