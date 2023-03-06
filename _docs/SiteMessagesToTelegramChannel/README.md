@@ -81,7 +81,7 @@ class Telegram
 
 ```
 
-3. Asosiy `Telegram` klasimizni yaratib oldik. Endi undan foydalanib, telegram kanalimizga xabar jo'natamiz. Faraz qilaylik, `contact` degan metod yordamida xabar jo'natilsin. Shu metodni yozamiz:
+3. Asosiy `Telegram` klasimizni yaratib oldik. Endi undan foydalanib, telegram kanalimizga xabar jo'natamiz. Faraz qilaylik, `ContactsController` klasimizdagi `contact` degan metod yordamida xabar jo'natilsin. Shu metodni yozamiz:
 
 ```php
 //...   
@@ -122,3 +122,11 @@ public function contact(Request $request)
 ```
 
 4. Faqat bu metodni routeda ko'rsatib qo'ysak bo'ldi.
+
+```php
+//...
+Route::post('/contact-me', [ContactsController::class, 'contact']);
+//...
+```
+
+> Eslatma: `parse_mode` `html` bo'lganida faqat quyidagicha html taglarni qo'llaydi: `<b>`, `<strong>`, `<i>`, `<em>`, `<u>`, `<ins>`, `<s>`, `<strike>`, `<del>`, `<span>`, `<tg-spoiler>`, `<a>`, `<pre>`, `<code>`.
