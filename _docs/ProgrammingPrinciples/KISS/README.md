@@ -175,3 +175,143 @@ Juda ham ajoyib, to'g'rimi? Tizimda qanaqangi murakkab ishlar bo'layotaganining 
 Lekin, aslida bu noto'g'ri.
 
 Oldin aytganimizdek, funksiyalarga abstract holatda munosabatda bo'lamiz. OOPdagi obyektlarga ham xuddi shunday qaraymiz. Hattoki, array kabi foydalanayotgan dasturlash tilimizdagi sodda ma'lumot turlariga ham hayotdagi murakkab narsalarning abstrakt ko'rinishi sifatida qaraymiz.
+
+Quyidagicha misol ko'raylik:
+
+```php
+<?php
+
+$this->createOrderAndMoveStockAndDeliverToUser();
+```
+
+Bu yerdagi abstraksiya nima deyapti?
+
+1. Quyidagi vazifalarni bajaryapti: buyurtmalar (order), bozorga chiqarish (stock) va yetkazib berish (delivery).
+2. Metod bir biriga bog'liq bo'lmagan tushunchalarni o'z ichiga olgan. Biz buyurtmani uni bozorga chiqarmasdan turib yaratishimiz yoki buyurtma yaratmasdan turib bozorga chiqarishimiz mumkin.
+3. Hattoki, murakkablik abstraksiyalashtirilgan va yashirilgan bo'lsada, hali ham u mavjud. U shunchaki yashirib qo'yilgan, yo'q qilinmagan.
+4. Agar buyurtmani yaratishni o'zgartirmoqchi bo'lsak, hattoki ular mustaqil bo'lishsada, bu bozorga chiqarish va yetkazib berishga ta'sir qilishi mumkin.
+
+Bunda abstraksiya murakkablikni yashirishi mumkin, lekin ishimizni soddalashtirib bermaydi. Bunday holatda, bo'lib tashla va hukmronlik qil (devide and conquer) tushunchasi bizga yordam beradi:
+
+```php
+<?php
+
+$this->createOrder();
+$this->moveStocks();
+$this->deliverToUser();
+```
+
+Metodlar endi ancha mustaqil bo'ldi. Har qaysi metod o'z ishi bilan shug'ullanishi murakkablikni kamaytiradi. Bu esa, inkapsulyatsiya deyiladi. Kod yozishda eng asosiy yodda tutishimiz kerak bo'lgan narsa, shubhasiz inkapsulyatsiyadir.
+
+Keling, endi boshqa asosiy tamoyillardan birini ko'rib chiqaylik.
+
+# Polimorfizm
+
+Polimorfizm ham dasturlashdagi asosiy tushunchalardan biri hisoblanadi. U biror modulni (masalan, klas, paket) turli xil ko'rinishda ishlatish sifatida tushuniladi. Interfeyslardan aynan shu maqsadda foydalanamiz:
+
+```php
+<?php
+
+namespace App;
+
+interface Checkout
+{
+    public function addProduct();
+}
+```
+
+Interfeyslar tizimning biror qismini shu qismga ta'sir qilmasdan turib boshqasi bilan almashtirish imkonini beradi. Lekin, afsuski, polimorfizm ham ko'plab murakkabliklarga sabab bo'lib qoladi. Buni tushunish uchun oldinroq ko'rgan lazana arxitekturasini esga oling. Ko'plab qatlamlar moslashuvchanlikni amalga oshirish uchun interfeyslarga ega bo'ladi.
+
+Faraz qilaylik, siz ma'lumotlarni databasega emas, faylga saqlamoqchisiz. Bunda sizga interfeyslar orqali yaratilgan polimorfizm yordam beradi. Bu yaxshi, ammo, barcha narsaning ham o'z to'lovi bor:
+
+* Kodning ish jarayonida (runtime) aynan nima ishlayotganini bilish qiyin bo'ladi. To'g'ridan to'g'ri bo'lmagan bog'lanish (indirection) ko'plab chalkashliklarga sabab bo'ladi.
+* Har safar yangi qo'shishda yoki o'zgartirishda bu interfeyslarni yangilashga to'g'ri kelishi mumkin. Bu esa juda ko'p vaqt talab qilishi mumkin.
+
+Umuman olganda, o'zingizga savol bering: dasturga shunaqa darajadagi murakkablik kerakmi?
+
+Aslida, ko'pgina hollarda interfeyslardan foydalanish juda foydali. Agar ish jarayonida biror obyektni boshqasi bilan almashtirib turish zarurati bo'lsa, marhamat, interfeyslardan foydalanishingiz mumkin. Ammo agar bunday almashtirishlar kelajakda kerak bo'lib qolishi mumkin bo'lsa, interfeysni ishlatishga shoshilmang.
+
+# Dependency muammosi
+
+Tizimda juda ko'p dependencyning bo'lishi ham murakkablikka sabab bo'ladi. Chunki, dependencylar tizimning qismlarini bir biriga bog'laydi.
+
+**Dependency zarur narsami?**
+
+Kod yozish paytida klaslar yoki modullar orasida yangi dependency qo'shmoqchi bo'lsangiz, doimo o'zingizga savol bering:
+
+1. Bu dependencylar o'zi zarurmi? Kodning shu qismini bir biriga bog'lash kerakmi?
+2. Agar zarur bo'lsa, dependencylarni qanday aniqlashtirib olsam bo'ladi?
+
+Ishlayotgan sohangizni yaxshilab tushunib oling. O'zi siz ishlayotgan kodda dependencylar kerakmi? Masalan, `Shipment` va `Order` ni bir biriga bog'lash zarurmi? Unchalik ham shart emas: `order` `shipment`siz ham ishlay oladi. Shuning uchun ham, `order`ni `shipment`siz yozsa bo'ladi.
+
+Yuqoridagi savollarni berish juda muhim.
+
+# Dependency murakkabligini boshqarish
+
+Barcha dependencylarni biror joyda guruhlash tizim murakkabligini bir qarashda tushunishga yordam beradi. Bu sizga barcha dependencylarni osonlik bilan tasavvur qilishingizga imkon beradi. Misol uchun, dependency container bu borada yordam berishi mumkin. Lekin, bu to'liq yechim bo'lib hisoblanmaydi. Masalan, biror Golang dasturchisi, o'zining barcha dependencylarini bitta paketda e'lon qilib qo'yishi mumkin.
+
+Dependencylarni to'g'ri boshqarish biror o'zgarish qilganingizda kodingizning boshqa qismlariga yomon ta'sir qilishini oldini olishga yordam beradi. Ya'ni, bu sizning proyektingizda ishlayotgan boshqa dasturchilarga qo'llanma bo'lib xizmat qiladi.
+
+Shuning uchun ham, dependencylarni klasning setterlari yoki boshqa metodlariga inject qilish yaxshi fikr emas. Dependencylarni klasga inject qilishning eng yaxshi usuli, ularni constructorga inject qilish hisoblanadi. Bunda siz inject qilingan dependencylarni osonlik bilan topib olishingiz mumkin. Agar ularni to'g'ri kelgan metodga inject qilsangiz, keyinchalik ularni topishga qiynalib qolishingiz mumkin.
+
+Endi misol ko'raylik:
+
+```php
+<?php
+
+class ProductCollection
+{
+}
+
+// Aniq ishlatilishi
+// 1. productCollection dependency klasning boshida, konstruktorning ichida to'g'ridan to'g'ri murojaat qilsa bo'ladi.
+// 2. Bu Order klasidan obyekt olish uchun productCollection kerak bo'lishini bildiradi.
+
+class Order
+{
+    /** @var ProductCollection */
+    private $productCollection;
+
+    public function construct(ProductCollection $productCollection)
+    {
+        $this->productCollection = $productCollection;
+    }
+
+    // boshqa metodlar
+}
+
+// Bu yerda esa aniq qilib berilmagan.
+// 1. Quyidagi setter metodni esa, boshqa metodlar ichidan ajratib olish juda qiyin.
+// 2. dasturchini chalkashtirib ham yuboradi: productCollection dependencyni qachon inject qilish kerak? O'zi bu muhimmi? Qaysi holatda kerak?
+
+class ShoppingCart
+{
+    // boshqa metodlar
+
+    public function setProductCollection(ProductCollection $productCollection)
+    {
+        $this->productCollection = $productCollection;
+    }
+
+    // boshqa metodlar
+}
+```
+
+# KISS tamoyili haqida qisqacha
+
+Ushbu maqolada, murakkablikka sabab bo'ladigan turli xil manbaalar keltirib o'tildi.
+
+KISS haqida eng asosiy bitta narsani eslab qolish kerak bo'ladigan bo'lsa, bu kodbeyzning har bir bosqichida murakkablikni hisobga olib ketish kerak. Yaratishda, ishlatishda, refactoringda, bug fiksingda va nihoyat qayta yozishda murakkablik haqida o'ylab ketish kerak bo'ladi.
+
+O'rganganlarimizni xulosa qilamiz:
+
+* Oddiy tizim hech qachon juda ko'p qismlardan iborat bo'lmaydi, va eng muhimi, juda ham ko'p o'zaro bog'liq qismlardan tashkil topmaydi.
+* Agar sizda ishlatayotgan kodbeyzingizning umumiy tasavvuri mavjud bo'lsa, demak siz kodbeyzdagi murakkablikni nazorat qilib turibsiz degani.
+* Iloji boricha boshqa xil yechimlarni taklif qilish orqali menejerlar tomonidan taklif qilinayotgan murakkabliklarni qisqartirishga harakat qiling (pul yoki vaqt haqida eslatishingiz mumkin).
+* Hozircha kerak bo'lmaydigan barcha narsani o'chirib tashlang. Keyinchalikka deb hech narsani saqlab qo'ymang. Kelajakda nima bo'lishini hech kim bilmaydi.
+* Global mutable state-lar va behavior-lardan qochishga harakat qiling.
+* Dasturingizda juda ham ko'p to'g'ridan to'g'ri bog'lanmaydigan qatlamlarni (layers of indirection) yaratmang.
+* Abstraksiyani faqat hozirda mavjud bo'lgan narsalarni umumlashtirish yoki soddalashtirish uchun yarating (kelajakda kerak bo'lar deb emas).
+* Dependencylar qayerda boshqarilishini aniqlashtirib qo'ying.
+* Agar yaxshiroq yechimi bo'ladigan bo'lsa, modullarni bog'lashdan ehtiyot bo'ling.
+* Kodbeyzingizni juda murakkablashtirib tashlamang. Uni har qanday kishi keyinchalik o'zgaritira olishi kerak. Hattoki, yangi o'rganayotgan dasturchi bo'lsa ham.
