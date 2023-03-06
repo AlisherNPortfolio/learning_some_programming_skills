@@ -315,3 +315,6 @@ O'rganganlarimizni xulosa qilamiz:
 * Dependencylar qayerda boshqarilishini aniqlashtirib qo'ying.
 * Agar yaxshiroq yechimi bo'ladigan bo'lsa, modullarni bog'lashdan ehtiyot bo'ling.
 * Kodbeyzingizni juda murakkablashtirib tashlamang. Uni har qanday kishi keyinchalik o'zgaritira olishi kerak. Hattoki, yangi o'rganayotgan dasturchi bo'lsa ham.
+
+
+Va nihoyat, nafaqat dasturlash, kod yozishda, balki har qanday sohada qilinayotgan ishni yoki loyihalanayotgan mahsulotni murakkablashtirib yubormaslik juda muhim. Chunki, bu ish yoki loyiha bilan faqat siz ishlamaysiz. U bilan sizning hamkasblaringiz yoki mijozlar ham ishlaydi. Ular sizning ishingiz yoki loyihangizni ko'rganda, bir qarashda tushunishlari kerak.
