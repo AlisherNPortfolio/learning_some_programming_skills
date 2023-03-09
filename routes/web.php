@@ -52,3 +52,12 @@ if (\Illuminate\Support\Facades\App::environment('local')) { // Bu route faqat d
         return null;
     });
 }
+// ************************* queue, job, worker *************
+Route::get('/queue', function () {
+    // dispatch(new \App\Jobs\SendVerificationEmail()); // <== Job klas obyektini beramiz
+    \App\Jobs\SendVerificationEmail::dispatch();
+    // \App\Jobs\SendVerificationEmail::dispatch()
+    //     ->onQueue('high-priority');
+
+    return view('queue.index');
+});
