@@ -1,8 +1,8 @@
 # Laravel queue-lar
 
-Ko'pchilikni odatda web dasturlarning tez ishlashini xohlashadi va bu albatta tabiiy hol. Lekin web dasturlarda shunday jarayonlar bo'ladiki, ular biz xohlaganimizday tez ishlay olmaydi. Misol uchun, avtomatik emial jo'natish yoki juda katta ma'lumotlar asosida statistika chiqarish kabi holatlarni olayli.
+Ko'pchilikni odatda web dasturlarning tez ishlashini xohlashadi va bu albatta tabiiy hol. Lekin web dasturlarda shunday jarayonlar bo'ladiki, ular biz xohlaganimizday tez ishlay olmaydi. Misol uchun, avtomatik email jo'natish yoki juda katta ma'lumotlar asosida statistika chiqarish kabi holatlarni olayli.
 
-Lekin, deyarli barcha holatlarda web dasturlarda email yuborganingizda yoki katta hajmdagi ma'lumotga ega statistikani chiqarishda dastur oynasi yuklanib turgan holda sizni kutib turishga majbur qilmaydi. Chunki, bunda uzoq vaqt oladigan yuqoridagi kabi jarayonlar background-da asinxron (nomutanosib, mos ravishda emas) ravishda ishlaydi. Laravel freymvorkida bunday jarayonlarni backgroundda ishlashini Laravel queue-lar ta'minlab beradi.
+Lekin, deyarli barcha holatlarda web dasturlarda email yuborganingizda yoki katta hajmdagi ma'lumotga ega statistikani chiqarishda dastur oynasi yuklanib turgan holda sizni kutib turishga majbur qilmaydi. Chunki, bunda uzoq vaqt oladigan yuqoridagi kabi jarayonlar background-da asinxron (nomutanosib, mos ravishda emas yoki oddiyroq qilib, parallel deyish mumkin) ravishda ishlaydi. Laravel freymvorkida bunday jarayonlarni backgroundda ishlashini Laravel queue-lar ta'minlab beradi.
 
 # Bugungi darsda o'rganiladigan ma'lumotlar
 
@@ -32,11 +32,11 @@ Lekin, deyarli barcha holatlarda web dasturlarda email yuborganingizda yoki katt
 
 Kod yozishdan oldin jarayonlarni asinxron ishlashini misollar ko'rish orqali tushunib olaylik. Faraz qiling, siz online oziq-ovqat sotish do'koni egasisiz. Sizning do'koningiz telefon orqali buyurtmalar qabul qilib, ularni egalariga yetkazib berish bilan shug'ullanadi.
 
-Endi, tasavvur qiling, mijoz qo'ng'irog'iga javob berib, buyurtma qabul qildingiz. Keyin, omborga kirib, buyurtmada ko'rsatilgan mahsulotlarni olasiz, ularni qutiga joylaysiz va oxirida uni yetkazib beruvchiga topshirasiz. Mana shu holatda, ya'ni olgan buyurtmangizni qutiga solib, yetkazib beruvchiga jo'natayotgan vaqtingizda (tahminan yarim yoki bir soat ichida deylik) boshqa yangi buyurtmani qabul qila olmaysiz. Chunki bu vaqtda siz band bo'lasiz. Bunday ishlashni sinxron ishlash deyiladi. Ya'ni, siz ish bajarish paytingizda, yangi kirish yoki chiqish amallarini bloklab qo'yasiz (buyurtma qabul ham qila olmaysiz, yoki biror narsani jo'nata olmaysiz ham, chunki siz omborda mahsulotlarni yig'ib, qutiga joylayotgan bo'lasiz).
+Endi, tasavvur qiling, mijoz qo'ng'irog'iga javob berib, buyurtma qabul qildingiz. Keyin, omborga kirib, buyurtmada ko'rsatilgan mahsulotlarni olasiz, ularni qutiga joylaysiz va oxirida uni yetkazib beruvchiga topshirasiz. Mana shu holatda, ya'ni olgan buyurtmangizni qutiga solib, yetkazib beruvchiga jo'natayotgan vaqtingizda (taxminan yarim yoki bir soat ichida deylik) boshqa yangi buyurtmani qabul qila olmaysiz. Chunki bu vaqtda siz band bo'lasiz. Bunday ishlashni sinxron (ketma-ket) ishlash deyiladi. Ya'ni, siz ish bajarish paytingizda, yangi kirish yoki chiqish amallarini bloklab qo'yasiz (buyurtma qabul ham qila olmaysiz, yoki biror narsani jo'nata olmaysiz ham, chunki siz omborda mahsulotlarni yig'ib, qutiga joylayotgan bo'lasiz).
 
 Bunaqa sinxron ishlash o'rniga, siz omborga bitta ishchi (**worker**) yollaysiz. O'zingiz telefon oldida turib, yangi buyurtmalarni qabul qilib olaverasiz, qabul qilingan buyurtmalarni qog'ozga yozib qo'yib (bu yozuvlarni **job** deb nomlaylik), ularni navbatga (**queue**-ga) qo'yib qo'yaveramiz.
 
-Bunda siz yollagan ishchi (worker) qog'ozga yozib qo'ygan bajarilishi kerak bo'lgan buyurtmalarni (job-larni) navbat bilan (queue-dan olib) bajarib boradi. Mana shu holatda, sizda yangi buyurtmalarni qabul qilishda va ularni egalariga jo'natishda hech qanday uzilish bo'lib qolmaydi. Bunday ishlashni asinxron ishlash desak bo'ladi.
+Bunda siz yollagan ishchi (**worker**) qog'ozga yozib qo'ygan bajarilishi kerak bo'lgan buyurtmalarni (**job**-larni) navbat bilan (**queue**-dan olib) bajarib boradi. Mana shu holatda, sizda yangi buyurtmalarni qabul qilishda va ularni egalariga jo'natishda hech qanday uzilish bo'lib qolmaydi. Bunday ishlashni asinxron (parallel) ishlash desak bo'ladi.
 
 Shu job, worker va queue g'oyasini Laravelda ishlashini ko'raylik:
 
@@ -88,7 +88,7 @@ Nimaga bunday bo'lganini tushunish uchun, `.env` faylini ochib, `QUEUE_CONNECTIO
 
 # Queue driverlar
 
-Freymvork job-larni asinxron ishlatishi uchun queue-ga boshqa turdagi driverni belgilashimiz kerak bo'ladi. Queue uchun berilishi mumkin bo'lgan driverlarning sozlamalari `config/queue.php` faylida berilgan:
+Freymvork job-larni asinxron ishlatishi uchun queue-ga boshqa turdagi connection-ni belgilashimiz kerak bo'ladi. Queue uchun berilishi mumkin bo'lgan connection-larning sozlamalari `config/queue.php` faylida berilgan:
 
 ```php
 'connections' => [
