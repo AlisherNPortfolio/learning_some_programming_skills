@@ -2,6 +2,9 @@
 
 use App\Events\SimpleChatEvent;
 use App\Http\Controllers\Broadcasting\MessageController;
+use App\Http\Controllers\Patterns\AbstractFactory\AccountController;
+use App\Http\Controllers\Patterns\AbstractFactory\HomeController;
+use App\Http\Controllers\Patterns\AbstractFactory\StoreController;
 use App\Http\Controllers\WebAuth\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -61,3 +64,9 @@ Route::get('/queue', function () {
 
     return view('queue.index');
 });
+
+// ******************** Design Patterns / Abstract Factory **********
+
+Route::get('abstract-factory', [HomeController::class, 'index']);
+Route::get('create-account', [AccountController::class, 'create']);
+Route::get('create-store', [StoreController::class, 'create']);
