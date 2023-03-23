@@ -45,7 +45,7 @@ return $this->hasOne(Phone::class, 'foreign_key', 'local_key'); // bu yerda loca
 **Teskari bog'lanishni amalga oshirish**
  Tepada User modeliga bog'langan Phone modelini ma'lumotlarini chaqirishni ko'rdik. Endi shuning teskarisi, Phone modeli bog'langan User modeli ma'lumotlarini chaqirishni ko'raylik. Bu ham xuddi oldingisi singari model klas ichida bog'lovchi metodni chaqirish orqali bajariladi. Endi, bola jadval uchun biz `belongsTo` metodini chaqirib ota jadvalga bog'lanamiz:
 
- ```php
+```php
 <?php
  
 namespace App\Models;
@@ -63,6 +63,121 @@ class Phone extends Model
         return $this->belongsTo(User::class);
     }
 }
- ```
+```
 
 Ko'rib turganingizdek, bu yerda ham xuddi oldingiga o'xshash usul, farqi bog'lovchi metod boshqa.
+
+Odatda, agar `foreign key` va `owner key` larni Eloquentning o'zi jadval nomlariga `_id` qo'shish orqali aniqlab oladi. `Phone` modeli va `User` modeli bog'lanishida yuqoridagi `belongsTo` misoli uchun foreign key - `user_id` va owner key - `id`. Lekin, agar foreign key hamda local key nomlari standart kelishuvdagidan boshqacha nom bilan berilsa ular quyidagi ko'rinishda belgilab qo'yiladi:
+
+```php
+//...
+/**
+ * Get the user that owns the phone.
+ */
+public function user(): BelongsTo
+{
+    return $this->belongsTo(User::class, 'foreign_key', 'owner_key');
+}
+//...
+```
+
+# One To Many
+
+One To Many bog'lanishda bitta jadvaldagi yozuvga boshqa jadvaldagi bir nechta yozuvlar bog'lanadi. Bu bog'lanishga misol qilib, onlayn do'konda bitta xaridorning bir nechta buyurtmalari (order-lari) bo'lishini keltirishimiz mumkin.
+
+![1679549784530](image/OneToOne/1679549784530.png)
+
+Laravelda One To Many bog'lanishni ota modelda `hasMany`, bola modelda `belongsTo` metodlari bilan amalga oshiriladi.
+
+Ota modelda `hasMany`:
+
+```php
+<?php
+ 
+namespace App\Models;
+ 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+ 
+class Customer extends Model
+{
+    /**
+     * Get the orders for the customer.
+     */
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+}
+```
+
+Foreign keyni Laravelning o'zi jadval nomidan keyin `_id` qo'yish orqali avtomatik aniqlab oladi. Misol uchun, `customer_id`.
+
+Endi, bitta xaridorning buyurtmalarini olish uchun yuqoridagi `order()` metodiga xususiyat ko'rinishida murojaat qilamiz:
+
+```php
+$orders = Customer::query()->find(1)->orders;
+
+foreach($orders as $order) {
+    //...
+}
+```
+
+Barcha relationship metodlari query builder sifatida ishlaydi. Shu sababli ham relationship-larda kerakli query metodlarni ishlatish mumkin. Relationshipni metod ko'rinishida chaqirish kerak bo'ladi:
+
+```php
+$orders = Customer::query()->find(1)
+                           ->orders()
+                           ->where('status', '=', 'active')
+                           ->first();
+
+```
+
+`hasOne`-ga o'xshab, `hasMany`-da ham foreign va local key-larni o'zimiz bersak ham bo'ladi:
+
+```php
+return $this->hasMany(Order::class, 'foreign_key', 'local_key');
+```
+
+**Teshkari bog'lanishni amalga oshirish**
+
+Endi, `Order` klasida turib `Customer` klasga bog'lanishni ko'ramiz. Bunda ham bola modeldan ota modelga bog'lanishdagi kabi `belongsTo` metodidan foydalaniladi:
+
+```php
+<?php
+ 
+namespace App\Models;
+ 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+ 
+class Order extends Model
+{
+    /**
+     * Get the customer that owns the order.
+     */
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
+    }
+}
+```
+
+Bola model (Order) orqali ota model (Customer) ma'lumotlarini olish:
+
+```php
+use App\Models\Order;
+ 
+$order = Order::query()->find(1);
+ 
+return $order->customer->name;
+```
+
+Foreign va owner keylarni qo'lda berish:
+
+```php
+public function customer(): BelongsTo
+{
+    return $this->belongsTo(Customer::class, 'foreign_key', 'owner_key');
+}
+```
