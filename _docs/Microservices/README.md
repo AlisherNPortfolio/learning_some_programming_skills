@@ -112,3 +112,23 @@ Shu yergacha dockerda laravel va mysqlni o'rnatib ishga tushirdik. Proyektni ish
 ```
 
 3. Endi yangi `products` nomli jadval yaratamiz: `php artisan make:migration create_products_table`
+4. `products` jadvaliga 3ta `title`, `image` va `likes` ustunlarini qo'shamiz:
+
+```php
+//...
+    public function up(): void
+    {
+        Schema::create('products', function (Blueprint $table) {
+            $table->id();
+            $table->string('title');
+            $table->string('image');
+            $table->unsignedInteger('likes')->default(0);
+            $table->timestamps();
+        });
+    }
+//...
+```
+
+5. Keyin, migration-ni run qilamiz: `php artisan migrate`
+
+> !!!Eslatma: proyektning artisan buyrug'i docker container muhitida ishlashi kerak. Buning uchun buyruqlar qatorida (terminal, cmd) `docker-compose exec container_name sh` buyrug'i ishga tushiriladi. Bizning misolda `container_name` `admin` bo'ladi.
