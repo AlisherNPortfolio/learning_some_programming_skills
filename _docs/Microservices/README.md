@@ -36,8 +36,9 @@ RUN apt-get update && apt-get install -y \ # proyekt ishlashi uchun kerak bo'lad
      && docker-php-ext-install mysqli \
      && docker-php-ext-install zip \
      && docker-php-ext-install sockets \
-     && docker-php-source delete \
-     && curl -sS https://getcomposer.org/installer | php -- \
+     && docker-php-source delete
+
+RUN curl -sS https://getcomposer.org/installer | php -- \
       --install-dir=/usr/local/bin --filename=composer
 
 WORKDIR /app # ishchi papka nomini berish
@@ -72,7 +73,7 @@ services:
     volumes: # mysqlning fayllari proyektning qaysi papkasida joylashishini ko'rsatadi
       - ./storage/dbdata:/var/lib/mysql
     ports:
-      - 33060:3306 # 1-si mysqlning tashqariga chiqish porti, 2-si docker containerdagi mysql port
+      - 33061:3306 # 1-si mysqlning tashqariga chiqish porti, 2-si docker containerdagi mysql port
 
 ```
 
@@ -91,7 +92,6 @@ DB_PASSWORD=root
 ```
 
 6. Proyektni Dockerda ishga tushiramiz: `docker-compose up`
-
 
 Shu yergacha dockerda laravel va mysqlni o'rnatib ishga tushirdik. Proyektni ishga tushganini bilish uchun browser-da `http://localhost:8000` manzilni ochib ko'rish kifoya. MySQLning ishlayotganini tekshirish uchun esa database bilan ishlovchi biror dasturda ochib ko'rsa bo'ladi. Masalan, DBeaver-da.
 
@@ -131,4 +131,4 @@ Shu yergacha dockerda laravel va mysqlni o'rnatib ishga tushirdik. Proyektni ish
 
 5. Keyin, migration-ni run qilamiz: `php artisan migrate`
 
-> !!!Eslatma: proyektning artisan buyrug'i docker container muhitida ishlashi kerak. Buning uchun buyruqlar qatorida (terminal, cmd) `docker-compose exec container_name sh` buyrug'i ishga tushiriladi. Bizning misolda `container_name` `admin` bo'ladi.
+> !!!Eslatma: proyektning artisan buyrug'i docker container muhitida ishlashi kerak. Buning uchun buyruqlar qatorida (terminal, cmd) `docker-compose exec container_name sh` buyrug'i ishga tushiriladi. Bizning misolda `container_name` `admin` bo'ladi. Yoki shunchaki, `docker-compose exec continer_name command_name` buyrug'i bilan ham artisan buyruqlarni ishlatsa bo'ladi. Masalan yuqoridagi migrate qilish buyrug'i quyidagicha bo'ladi: `docker-compose exec admin php artisan migrate`
