@@ -18,4 +18,4 @@ services:
     volumes: # mysqlning fayllari proyektning qaysi papkasida joylashishini ko'rsatadi
       - ./storage/dbdata:/var/lib/mysql
     ports:
-      - 33060:3306 # 1-si mysqlning tashqariga chiqish porti, 2-si docker containerdagi mysql port
+      - 33061:3306 # 1-si mysqlning tashqariga chiqish porti, 2-si docker containerdagi mysql port
