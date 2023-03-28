@@ -132,3 +132,189 @@ Shu yergacha dockerda laravel va mysqlni o'rnatib ishga tushirdik. Proyektni ish
 5. Keyin, migration-ni run qilamiz: `php artisan migrate`
 
 > !!!Eslatma: proyektning artisan buyrug'i docker container muhitida ishlashi kerak. Buning uchun buyruqlar qatorida (terminal, cmd) `docker-compose exec container_name sh` buyrug'i ishga tushiriladi. Bizning misolda `container_name` `admin` bo'ladi. Yoki shunchaki, `docker-compose exec continer_name command_name` buyrug'i bilan ham artisan buyruqlarni ishlatsa bo'ladi. Masalan yuqoridagi migrate qilish buyrug'i quyidagicha bo'ladi: `docker-compose exec admin php artisan migrate`
+
+5. Hozircha `UserFactory` klasning `defenition()` metodidagi qaytuvchi massivni bo'sh qilib turamiz:
+
+```php
+    public function definition(): array
+    {
+        return [];
+    }
+```
+
+6. `products` uchun factaroy yozamiz. Buning uchun `docker-compose exec admin php artisan make:factory ProductFactory` buyrug'ini ishga tushiramiz. Lekin, `database\factories` papkasida hech qanday `ProductFactory.php` fayli paydo bo'lmadi! Nega? Chunki, yuqoridagi buyruqni ishga tushirganimizda, u docker containerda shu nomdagi factoryni yaratdi, lekin bu yaratilgan fayl bizning proyektimiz papkasiga tushmadi. Endi, bu muammoni hal qilish uchun `docker-compose.yml` fayldagi `admin` servisiga (containeriga) `volume` qo'shishimiz kerak bo'ladi:
+
+```apache
+#...
+admin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes: # <===
+	# 1-da turgan nuqta biz ishlab turgan project, 2-da turgan /app esa dockerga yuklangan projectimiz (Dockerfiledagi WORKDIR: /app)
+      - .:/app # <=== shu qatorlar qo'shiladi
+    ports:
+      - 8000:8000 # 1-port localhostda chiqishi kerak bo'lgan port, 2-si Dockerfileda ko'rsatgan Docker container porti
+    depends_on: # admin servisi qaysi servislarni ishlatishi ko'rsatiladi
+      - admin_db
+#...
+```
+
+7. `docker-compose.yml` faylini o'zgartirganimizdan keyin dockerdagi proyektimizni qaytadan ishga tushiramiz. Buning uchun avval ishlab turgan containerni to'xtatib, `docker-compose up` buyrug'ini qaytadan ishlatamiz.
+8. `docker-compose exec admin php artisan make:factory ProductFactory` buyruqni qayta ishga tushiramiz.
+9. So'ngra `products` jadvali uchun model yaratamiz: `docker-compose exec admin php artisan make:model Product`
+10. `ProductFactory` klasidagi `protected $model` xususiyatiga `Product` modelini berib qo'yamiz:
+
+```php
+//...
+protected $model = Product::class;
+//...
+```
+
+11. Endi, `ProductFactory` klasining `defenitions()` metodi qaytaradigan massivni to'ldirib qo'yamiz:
+
+```php
+//...
+    public function definition(): array
+    {
+        return [
+            'title' => $this->faker->text(30),
+            'image' => $this->faker->imageUrl(),
+        ];
+    }
+//...
+```
+
+12. `ProductFactory` va `UserFactory` uchun seederlar yozamiz: `docker-compose exec admin php artisan make:seeder ProductSeeder` va `docker-compose exec admin php artisan make:seeder UserSeeder`
+13. `UserSeeder` va `ProductSeeder`ga kod yozamiz:
+
+```php
+//...
+    public function run(): void
+    {
+        User::factory(20)->create();
+    }
+//...
+```
+
+```php
+//...
+    public function run(): void
+    {
+        Product::factory(10)->create();
+    }
+//...
+```
+
+14. `DatabaseSeeder`da esa barcha seeder klaslarni chaqirib qo'yamiz:
+
+```php
+//...
+    public function run(): void
+    {
+        $this->call(UserSeeder::class);
+        $this->call(ProductSeeder::class);
+    }
+//...
+```
+
+yoki
+
+```php
+//...
+    public function run(): void
+    {
+        $this->call([
+            UserSeeder::class,
+            ProductSeeder::class,
+        ]);
+    }
+//...
+```
+
+15. `DatabaseSeeder` klasni ishga tushiramiz: `docker-compose exec admin php artisan db:seed`. Buyruqni ishga tushirganimizda quyidagi xatolik kelib chiqdi:
+
+```apache
+SQLSTATE[42S22]: Column not found: 1054 Unknown column 'updated_at' in 'field list' (Connection: mysql, SQL: insert into `users` (`updated_at`, `created_at`) values (2023-03-28 12:20:11, 2023-03-28 12:20:11))
+```
+
+Bunga sabab, userning migrationidan ba'zi ustunlarni o'chirib, faqat id ustuni qoldirilgan edi. Endi, shu o'zgarishlarni modelda ham to'g'rilash kerak:
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+
+class User extends Authenticatable
+{
+    use HasFactory;
+
+    public $timestamps = false;
+}
+```
+
+16. `docker-compose exec admin php artisan db:seed` buyrug'ini qayta ishga tushiramiz. Bu safar xatosiz ishlaydi.
+
+**Controller qismi bilan ishlash**
+
+Endi kontroller bilan ishlashni boshlaymiz.
+
+17. `ProductController` yaratamiz: `docker-compose exec admin php artisan make:controller ProductController`
+18. Product uchun CRUD yaratishni boshlaymiz. Avval, `ProductController`da barcha productlarni oluvchi `index()` metodini yozamiz:
+
+```php
+//...
+    public function index()
+    {
+        return Product::all();
+    }
+//...
+```
+
+19. `ProductController`dagi `index()` metodi uchun `routes/api.php` faylida route yozamiz:
+
+```php
+//...
+Route::get('products', [ProductController::class, 'index']);
+//...
+```
+
+Postmanda (yoki insomnia, farqi yo'q) so'rov yuborib, ishlashini tekshirib ko'ramiz.
+
+20. Keyingi metod `show()`:
+
+```php
+//...
+    public function show(int $id): Product
+    {
+        return Product::query()->find($id);
+    }
+//...
+```
+
+21. Bu metod uchun ham route yozib qo'yamiz:
+
+```php
+//...
+Route::get('products/{id}', [ProductController::class, 'show']);
+//...
+```
+
+Bu APIni ham tekshirib ko'ramiz.
+
+22. Har doim `routes/api.php` faylni ochib yurmaslik uchun product CRUDning qolgan API routelarini ham oldindan yozib qo'yamiz:
+
+```php
+//...
+Route::get('products', [ProductController::class, 'index']);
+Route::get('products/{id}', [ProductController::class, 'show']);
+Route::post('products', [ProductController::class, 'store']);
+Route::put('products/{id}', [ProductController::class, 'update']);
+Route::delete('products/{id}', [ProductController::class, 'destroy']);
+//...
+```
+
+Yuqoridagi 5 qator route uchun kodlarni yozib yurmaslik uchun, tayyor
