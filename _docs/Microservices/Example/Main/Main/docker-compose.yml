@@ -4,10 +4,19 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    command: 'php artisan serve --host=0.0.0.0'
     volumes:
       - .:/app
     ports:
       - 8001:8000
+    depends_on:
+      - main_db
+
+  main_queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: 'php artisan queue:work'
     depends_on:
       - main_db
 

@@ -4,12 +4,21 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    command: 'php artisan serve --host=0.0.0.0'
     volumes:
       - .:/app
     ports:
       - 8000:8000 # 1-port localhostda chiqishi kerak bo'lgan port, 2-si Dockerfileda ko'rsatgan Docker container porti
     depends_on: # admin servisi qaysi servislarni ishlatishi ko'rsatiladi
       - admin_db
+
+  admin_queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: 'php artisan queue:work'
+    depends_on:
+      - admin_db # job failslar uchun db kerak bo'ladi
 
   admin_db:
     image: mysql:5.7.22 # mysql 8.0 php 8 da yaxshi ishlay olmaydi
