@@ -8,6 +8,8 @@ Tezlik yoki samaradorlik unchalik muhim bo'lmagan joyda kerakli qo'shimcha ma'lu
 
 Shuningdek, ma'lumotlarni keshlashni ham unutmaslik kerak. Databasega tez-tez so'rov yuborishni oldini olish uchun Redis yoki Memcached keshlash texnologiyalaridan foydalanish mumkin.
 
+---
+
 **API GateWay**
 
 Faraz qilaylik, microservice arxitekturasi asosida ishlaydigan onlayn do'kon dasturini yaratyapmiz. Dasturdagi product details sahifasini (mahsulot ma'lumotlari sahifasi) yaratish joyiga kelib qolganmiz. Mahsulot ma'lumotlari sahifasining turlicha ko'rinishini yatishimiz zarur bo'lyapti:
@@ -43,7 +45,61 @@ Shunday qilib, bu sahifa barcha ma'lumotlarini turli xildagi servicelardan olib 
 
 Kliyentlar (UI dasturlar) qanday qilib har bir microservicega murojaat qiladi?
 
-
 * Microservicelar tomonidan chiqarib berilgan APIlarning turli xil microservicelarda joylashganligi kliyentga ko'p hollarda kerak bo'ladigan ko'rinishdan ko'ra boshqacha bo'ladi. Microservicelar odatda faqat kliyentlar ma'lumotlarni olishlari uchun alohida-alohida APIlarni chiqarib beradi xolos. Misol uchun, yuqorida aytilganidek, kliyent mahsulot ma'lumotlarini turlicha microservicelardan oladi.
 * Har xil kliyentlar har xil ma'lumotni so'raydi. Masalan, desktop browserdagi mahsulot ma'lumotlari sahifasi mobil versiyanikidan ko'ra ancha murakkabroq bo'ladi.
-* Har xil kliyentlar uchun internet (yoki umuman tarmoq) tezligi har xil bo'ladi. Masalan, mobil internet boshqa internet turlariga qaraganda odatda sekonroq ishlaydi. Va albatta,
+* Har xil kliyentlar uchun internet (yoki umuman tarmoq) tezligi har xil bo'ladi. Masalan, mobil internet boshqa internet turlariga qaraganda odatda sekonroq ishlaydi. Va albatta, har qanday WAN tarmog'i LAN tarmog'idan sekinroq ishlaydi. Bu esa mobil dastur LAN ishlatayotgan serverda generatsiya qilinadigan web sayt ko'rinishidagi dasturiga nisbatan umuman boshqacha samaradorlikka ega tarmoqni ishlatishini anglatadi. Serverda generatsiya qilinadigan web sayt dasturi mobil dasutrdan farqli ravishda hech qanday qiyinchiliksiz  backend servicelarga ko'p sondagi so'rovlarni yuborishi mumkin.
+* Servicelarning miqdori va ularning joylashgan joylari (host + port) dinamik o'zgaradi.
+* Servicelarga ajratib chiqish vaqt o'tishi bilan o'zgarishi mumkin va bu o'zgarishlar kliyentlarga bilinmasligi (ta'sir qilmasligi) kerak.
+* Servicelar turli xildagi protokollardan foydalanishi, bu protokollar esa har doim ham webga to'g'ri kelmasligi mumkin.
+
+
+**Yechim**
+
+Yuqoridagi muammolarni hal qilish uchun barcha kliyentlar murojaat qiladigan yagona kirish nuqtasi - API gateway dan foydalanish mumkin. API gateway so'rovlar bilan ikki usuldan biri bilan shlaydi. Ayrim so'rovlar shunchaki o'ziga mos servicega proxy qilinadi yoki yo'naltiriladi. U esa boshqa so'rovlarni boshqa servicelarga tarqatadi.
+
+![1680233522793](image/APIGateway/1680233522793.png)
+
+Barchasi bittaga mos keluvchi API usulidan ko'ra API gateway har bir kliyent uchun turli xildagi APIlarni chiqarib berishi mumkin.
+
+API gatewayda xavfsizlikni ham ta'minlash mumkin. Masalan, so'rov yuboruvchi kliyent shu so'rovni yuborish huquqiga egaligini tekshirish.
+
+
+**Variation (turi): Frontendlar backendlar uchun.**
+
+Frontendlar uchun backendlar patterni API gateway patternning bir turi hisoblanadi. Bu pattern bo'yicha haq qaysi turgagi kliyent uchun alohida API gateway yaratiladi. Misol uchun, web uchun alohida, mobil dasturlar alohida kabi.
+
+![1680234263597](image/APIGateway/1680234263597.png)
+
+Yuqoridagi rasmda keltirilgan misolda uch xil turdagi kliyentlar uchun alohida API gateway yaratilgan: web dasturlar uchun, mobil dasturlar uchun va tashqi kliyent dasturlar uchun.
+
+API gatewayning quyidagicha afzalliklari mavjud:
+
+* Kliyentlar backend dastur qanday ko'rinishda microservicelarga ajratilgani haqida bilishi shart bo'lmaydi.
+* Kliyentlarni microservicelar qayerda joylashgani haqida bilishi shart bo'lmaydi.
+* Har bir kliyent uchun optimal API chiqarib beriladi.
+* Bir qancha so'rovlarning qisqarishiga sabab bo'ladi. Masalan, API gateway kliyentga bitta so'rov orqali bir nechta microservicedan ma'lumot olishga imkon beradi. API gateway mobil dasturlar uchun muhim hisoblanadi.
+* Ko'p sonli servicelarni API gatewayga o'tkazish orqali kliyent qismini soddalashtirib beradi.
+
+
+API gatewayning kamchiliklari:
+
+* Dastur arxitekturasi juda murakkab bo'lib ketadi. API gateway uchun ham kod yozish, uni boshqarish kerak bo'ladi.
+* So'rovga javob qaytish vaqti ortadi. Chunki, API gateway qo'shilishi natijasida so'rov yuradigan "yo'li" ortadi.
+
+
+Muammolar:
+
+* API gatewayni qanday ishlatish kerak? Agar yuqori yuklanish bilan ishlaydigan dasturlarni kengaytirish kerak bo'lsa, event-driven/reactive yondashuvi eng mos tushadi.
+
+
+Bu patternga aloqador boshqa patternlar:
+
+* Microservice arxitektura patterni bu patterndan foydalanishi mumkin.
+* API gateway so'rovlarni mavjud servicelarga yo'naltirish uchun yoki Client-side discovery patternidan yoki Server-side discovery patternidan foydalanadi.
+* API gateway servicelarni ishga tushirish uchun Circuit Breaker patternidan foydalanadi.
+* API gateway API Composition patternidan ham ko'p foydalanadi.
+
+
+---
+
+2006-yil Neal Ford dasturlashga Polyglot dasturlash atamasini kiritdi. Polyglot dasturlash - bu dasturlarni turli xildagi dasturlash tillarida yozish.
