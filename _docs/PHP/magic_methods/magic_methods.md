@@ -33,7 +33,7 @@ Ushbu metodni ***contstructor*** deb ham aytishadi.
 
 Misol:
 
-```
+```php
 <?php
 class Talaba {
     private $ism;
@@ -58,7 +58,7 @@ Bu metod destructor deb ham nomlanadi. U, klass ichida e'lon qilingan bo'lsa, ob
 
 Misol:
 
-```bas
+```php
 <?php
 class Talaba {
     private $ism;
@@ -82,14 +82,13 @@ $talabaObyekt = new Talaba('Alisher', 'myemail9445@inbox.ru');
 
 ```
 
-
 ### __set()
 
 __set() ichki metodi obyektning mavjud bo'lmagan yoki private bo'lgan xususiyatiga qiymat berish  paytida ishga tushadi. Bu metod obyektda ishlatmoqchi bo'lgan xususiyatingiz bo'lmasa lekin siz obyektga qo'shimcha ma'lumot kiritishingiz kerak bo'lganda ishlatiladi.
 
 Misol:
 
-``````bash
+``````php
 <?php
 class Talaba {
     private $data = array();
@@ -115,7 +114,7 @@ Bundan oldingi __set() metodi qanday qilib mavjud bo'lmagan xususiyatlarga qiyma
 
 Misol:
 
-```bash
+```php
 <?php
 class Talaba {
     private $data = array();
@@ -149,7 +148,7 @@ __toString() metodidan obyektni string sifatida chiqarmoqchi bo'lganingizda qand
 
 Misol:
 
-```bash
+```php
 <?php
 class Talaba {
     private $ism;
@@ -181,7 +180,8 @@ Yuqoridagi misolda, `$talabaObyekt` `echo` bilan ekranga chiqarilyapti. Bunda u 
 __set() va __get() metodlari mavjud bo'lmagan yoki private bo'lgan xususiyatlar bilan ishlaganda ishlatilsa, __call() metodidan klassda e'lon qilinmagan metodlar ishga tushirishda foydalaniladi.
 
 Misol 1:
-```bash
+
+```php
 <?php
 class Talaba {
     public function __call($methodName, $arguments)
@@ -197,25 +197,26 @@ $talabaObyekt->getStudentDetails(1);
 ```
 
 Misol 2:
-```bash
+
+```php
 <?php
 class Person
-{                             
+{                     
     function say()
     {
            echo "Hello, world!<br>";
-    }     
+    }   
 
     function __call($funName, $arguments)
     {
-          echo "The function you called：" . $funName . "(parameter：" ;  // Print the method\'s name that is not existed.
+          echo "The function you called：" . $funName . "(parameter：" ;  // Print the method`s name that is not existed.
           print_r($arguments); // Print the parameter list of the method that is not existed.
-          echo ")does not exist!！<br>\n";                   
-    }                                         
+          echo ")does not exist!！<br>\n";           
+    }                                 
 }
-$Person = new Person();           
+$Person = new Person();   
 $Person->run("teacher"); // If the method which is not existed is called within the object, then the __call() method will be called automatically.
-$Person->eat("John", "apple");             
+$Person->eat("John", "apple");     
 $Person->say();
 ```
 
@@ -224,7 +225,8 @@ Ko'rib turganingizdek, biz klassda e'lon qilinmagan `getStudentDetails` metodini
 __callStatic() metod ham __call() metodga juda o'xshaydi. Farqi, bu metod e'lon qilinmagan static metodni chaqirishda ishlatiladi.
 
 Misol:
-```bash
+
+```php
 <?php
 class Person
 {
@@ -246,14 +248,13 @@ $Person::eat("John", "apple");
 $Person->say();
 ```
 
-
 ### __isset() va __unset()
 
 __isset() metodi obyektning private yoki ma'vjud bo'lmagan xususiyati uchun `isset()` funksiyasini ishlatganda ishga tushadi.
 
 Misol:
 
-```bash
+```php
 <?php
 class Talaba {
     private $data = array();
@@ -271,7 +272,8 @@ echo isset($talabaObyekt->telefon);
 
 __unset() metodi esa obyektning private yoki mavjud bo'lmagan xususiyati uchun `unset()` funksiyasini ishlatganda ishga tushadi.
 Misol:
-```bash
+
+```php
 <?php
 class Person
 {
@@ -309,7 +311,7 @@ __sleep() metodi shu paytgacha ko'rgan ichki metodlarimizdan birmuncha farq qila
 
 Misol 1:
 
-```bash
+```php
 <?php
 class Talaba {
     private $ism;
@@ -338,7 +340,8 @@ class Talaba {
 ```
 
 Misol 2:
-```bash
+
+```php
 <?php
 class Person
 {
@@ -372,7 +375,8 @@ Yuqoridagi misolda, Talaba obyektini serialize qilinganda, __sleep() metodi chaq
 
 __wakeup() metodi esa `unserialize()` funksiyasi ishlatilganda ishga tushadi.
 Misol:
-```bash
+
+```php
 <?php
 class Person
 {
@@ -412,12 +416,12 @@ var_dump(serialize($person));
 var_dump(unserialize(serialize($person)));
 ```
 
-
 ### __invoke()
 
 __invoke() metodi obyektni funksiya sifatida ishlatganda ishga tushadi.
-Misol: 
-```bash
+Misol:
+
+```php
 <?php
 class Talaba {
     private $ism;
@@ -443,8 +447,10 @@ $talabaObyekt();
 __invoke() metodidan obyektni callable funksiya qilib ishlatishda foydalaniladi.
 
 ### __clone()
+
 Mavjud obyektning duplikatini olishda `clone` kalit so'zidan foydalaniladi. Ammo, agar klon qilingandan keyin klon qilingan obyektning xususiyatlarini o'zgartirmoqchi bo'lsak, klass ichida __clone() ichki metodini e'lon qilgan bo'lishimiz kerak bo'ladi.
 Misol:
+
 ```bash
 <?php
 Class Maktab_Oquvchisi {
@@ -475,8 +481,10 @@ Obyektni clone kalit so'z bilan klon qilishda klass ichida __clone() metodining 
 Yuqoridagi misolda, agar biz __clone() metodini e'lon qilmaganimizda `$oquvchiIkkiObyekt` obyekti `$oquvchiIkkiObyekt`idagi `$maktab_oquvchisi_obyekti` ga murojaat qilayotgan bo'lardi.
 
 ### __debugInfo()
+
 Bu metod obyektni `var_dump()` funksiyasida ishlatganda ishga tushadi. Agar bu metod e'lon qilinmagan bo'lsa var_dump() obyektning barcha public, protected, private xususiyatlarini ko'rsatadi. Shu sababli ham dump qilish paytida chiquvchi ma'lumotlarni cheklamoqchi bo'lsangiz, shu metoddan foydalansangiz bo'ladi.
 Misol:
+
 ```bash
 <?php
 class Talaba {
@@ -499,7 +507,9 @@ var_dump($talabaObyekt);
 Metod var_dump() funksiyasida obyekt chaqirilganda ko'rsatishi uchun kalit-qiymat juftligini qaytarishi kerak.
 
 ### __set_state()
+
 __set_state() metodi `var_export()` funksiyasi bilan birgalikda ishlatiladigan static metod hisoblanadi. `var_export()` funksiyasi o'zgaruvchi haqida tuzilmaviy ma'lumot chiqarib beradi. Bu funksiya yordamida klasslarni eksport qilishda klass ichida, albatta, `__set_state()` metodi e'lon qilingan bo'lishi kerak.
+
 ```bash
 <?php
 class Talaba {
@@ -529,6 +539,7 @@ var_export($talabaObyekt);
 ```
 
 ### __autoload()
+
 Noma'lum klassni yuklab olishga harakat qiladi.
 
 ```bash
@@ -555,6 +566,7 @@ $obj = new myClass();
 
 Misol 2:
 autoload ishlatmasdan
+
 ```bash
 <?php
 /**
@@ -581,6 +593,7 @@ if (ConditionA) {
 ```
 
 autoload bilan
+
 ```bash
 <?php
 /**
