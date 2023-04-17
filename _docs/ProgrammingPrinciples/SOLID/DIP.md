@@ -58,3 +58,135 @@ class SendWelcomeMessage
 	public function __construct(private MailerInterface $mailer) {}
 }
 ```
+
+2-misol
+
+Faraz qilaylik, Databasedagi ma'lumotlarni olib budjet hisobotini shakllantirib beruvchi tizim bor bo'lsin. Masalan, quyidagicha ko'rinishga ega:
+
+```php
+class BudgetReport {
+    public $database;
+
+    public function __construct($database)
+    {
+        $this->database = $database;
+    }
+
+    public function open(){
+        $this->database->get();
+    }
+
+    public function save(){
+        $this->database->insert();
+    }
+}
+
+class MySQLDatabase {
+    // fields
+
+    public function get(){
+        // get by id
+    }
+
+    public function insert(){
+        // inserts into db
+    }
+
+    public function update(){
+        // update some values in db
+    }
+
+    public function delete(){
+        // delete some records in db
+    }
+}
+
+// Client
+$database = new MySQLDatabase();
+$report = new BudgetReport($database);
+
+$report->open();
+```
+
+Bu kod hech qanday muammosiz ishlaydi. Lekin, u DIPga mos kelmaydi. Chunki, `BudgetReport` yuqori darajadagi modul quyi darajadagi `MySQLDatabase` moduliga bog'liq bo'lib qolyapti. Bu yana OCPni ham buzadi. Chunki, agar biz MongoDB kabi boshqa turdagi biror database bilan ishlashga to'g'ri kelishi ham mumkin.
+
+Bu kamchilikni tuzatish uchun aniq bitta database klasni emas umumlashtirilgan abstraksiyani ishlatishimiz kerak bo'ladi. Buning uchun har qanday database klas ishlatadigan `DatabaseInterface` nomli interface yaratamiz va shu interface orqali database klaslarimizni konstruktorga inject qilamiz.
+
+```php
+interface DatabaseInterface {
+    public function get();
+    public function insert();
+    public function update();
+    public function delete();
+}
+
+class MySQLDatabase implements DatabaseInterface {
+    // fields
+
+    public function get(){
+        // get by id
+    }
+
+    public function insert(){
+        // inserts into db
+    }
+
+    public function update(){
+        // update some values in db
+    }
+
+    public function delete(){
+        // delete some records in db
+    }
+}
+
+class MongoDB implements DatabaseInterface {
+    // fields
+
+    public function get(){
+        // get by id
+    }
+
+    public function insert(){
+        // inserts into db
+    }
+
+    public function update(){
+        // update some values in db
+    }
+
+    public function delete(){
+        // delete some records in db
+    }
+}
+
+class BudgetReport {
+    public $database;
+
+    public function __construct(DatabaseInterface $database)
+    {
+        $this->database = $database;
+    }
+
+    public function open(){
+        $this->database->get();
+    }
+
+    public function save(){
+        $this->database->insert();
+    }
+}
+
+// Client
+$mysql = new MySQLDatabase();
+$report_mysql = new BudgetReport($mysql);
+
+$report_mysql->open();
+
+$mongo = new MongoDB();
+$report_mongo = new BudgetReport($mongo);
+
+$report_mongo->open();
+```
+
+Endi, `BudgetReport` klasimiz aynan bitta database klasiga bog'lanib qolmadi.
